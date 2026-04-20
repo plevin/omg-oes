@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OES Course Planner</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── APP SHELL ─────────────────────────────────────────────── -->
+  <div class="app-shell">
+
+    <!-- LEFT SIDEBAR: Student Profile -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="school-badge">OES</div>
+        <div>
+          <div class="sidebar-title">Course Planner</div>
+          <div class="sidebar-subtitle">Upper School 2026–27</div>
+        </div>
+      </div>
+
+      <section class="profile-section">
+        <h3 class="section-heading">Student profile</h3>
+
+        <div class="field-group">
+          <label class="field-label" for="math-level">Current math placement</label>
+          <select id="math-level" class="field-select">
+            <option value="algebra">Algebra</option>
+            <option value="geometry" selected>Geometry</option>
+            <option value="advalg">Advanced Algebra</option>
+            <option value="advalg-h">Adv Algebra with Proofs (H)</option>
+            <option value="precalc">Precalculus</option>
+          </select>
+          <div class="field-hint" id="math-hint">On track for AP Calc BC path if honors-eligible</div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="language">Language</label>
+          <select id="language" class="field-select">
+            <option value="spanish">Spanish</option>
+            <option value="french">French</option>
+            <option value="chinese">Chinese</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="lang-level">Current language level</label>
+          <select id="lang-level" class="field-select">
+            <option value="1">Level 1</option>
+            <option value="2" selected>Level 2</option>
+            <option value="3">Level 3</option>
+            <option value="4">Level 4</option>
+          </select>
+          <div class="field-hint" id="lang-hint">Complete 2 more years to reach AP or HLC</div>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h3 class="section-heading">Interests</h3>
+        <div class="toggle-list">
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-stem" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">Deep STEM</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-cs">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">CS track</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-lang" checked>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">Language depth</span>
+          </label>
+          <label class="toggle-item">
+            <input type="checkbox" id="toggle-arts">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <span class="toggle-label">Arts</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <h3 class="section-heading">Legend</h3>
+        <div class="legend">
+          <div class="legend-item"><span class="badge badge-required">req</span> Required</div>
+          <div class="legend-item"><span class="badge badge-recommended">rec</span> Recommended</div>
+          <div class="legend-item"><span class="badge badge-decision">decide</span> Key decision</div>
+          <div class="legend-item"><span class="badge badge-unique">OES</span> Unique opportunity</div>
+          <div class="legend-item"><span class="badge badge-deadline">!</span> Act now</div>
+          <div class="legend-item"><span class="badge badge-completed">✓</span> Completed</div>
+          <div class="legend-item"><span class="badge badge-locked">–</span> Locked out</div>
+        </div>
+      </section>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+
+      <!-- TOP BAR -->
+      <header class="top-bar">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
+        <div class="view-tabs">
+          <button class="tab-btn active" onclick="switchView('grid')" id="tab-grid">Four-year plan</button>
+          <button class="tab-btn" onclick="switchView('paths')" id="tab-paths">Critical paths</button>
+          <button class="tab-btn" onclick="switchView('deadlines')" id="tab-deadlines">
+            Deadlines
+            <span class="deadline-badge" id="deadline-count">3</span>
+          </button>
+        </div>
+        <button class="print-btn" onclick="window.print()" title="Print plan">Print</button>
+      </header>
+
+      <!-- VIEW: FOUR-YEAR GRID -->
+      <div class="view" id="view-grid">
+        <div class="grid-container">
+          <div class="grid-header">
+            <div class="grid-corner"></div>
+            <div class="grade-label">Grade 9 <span class="grade-year">2026–27</span></div>
+            <div class="grade-label">Grade 10 <span class="grade-year">2027–28</span></div>
+            <div class="grade-label">Grade 11 <span class="grade-year">2028–29</span></div>
+            <div class="grade-label">Grade 12 <span class="grade-year">2029–30</span></div>
+          </div>
+          <div class="grid-body" id="grid-body">
+            <!-- Rows injected by planner.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW: CRITICAL PATHS -->
+      <div class="view hidden" id="view-paths">
+        <div class="paths-container" id="paths-container">
+          <!-- Injected by planner.js -->
+        </div>
+      </div>
+
+      <!-- VIEW: DEADLINES -->
+      <div class="view hidden" id="view-deadlines">
+        <div class="deadlines-container" id="deadlines-container">
+          <!-- Injected by planner.js -->
+        </div>
+      </div>
+
+    </main>
+
+    <!-- DETAIL PANEL (slides in from right on card click) -->
+    <aside class="detail-panel hidden" id="detail-panel">
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+      <div class="detail-content" id="detail-content">
+        <!-- Injected by planner.js -->
+      </div>
+    </aside>
+
+  </div><!-- /app-shell -->
+
+  <script src="courses-data.js"></script>
+  <script src="planner.js"></script>
+</body>
+</html>
