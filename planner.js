@@ -6,6 +6,7 @@
 const state = {
   currentGrade: 9,        // Student's current grade (9–12)
   mathLevel: 'geometry',
+  scienceLevel: 'physics', // Current science placement
   language: 'spanish',
   langLevel: 2,
   interests: {
@@ -106,6 +107,35 @@ const MATH_GRADE_OFFSET = {
   'math-multivariable': 4,
 };
 
+// ── SCIENCE LEVEL ORDERING ────────────────────────────────────────────────
+
+// Years-after-Physics offset for the core science sequence courses.
+// Only the required-sequence courses are here; electives (Engineering, Marine, etc.)
+// continue to use the default prereq-based displayGrade logic.
+const SCIENCE_GRADE_OFFSET = {
+  'sci-physics':   0,
+  'sci-chemistry': 1,
+  'sci-chem-h':    1,
+  'sci-biology':   2,
+  'sci-bio-h':     2,
+};
+
+// Maps state.scienceLevel to a sequence offset (parallel to SCIENCE_GRADE_OFFSET)
+const SCIENCE_LEVEL_OFFSET = {
+  'physics':   0,
+  'chemistry': 1,
+  'biology':   2,
+  'advanced':  3,
+};
+
+// Maps state.scienceLevel to the course ids that represent the student's current science course
+const SCIENCE_LEVEL_TO_COURSES = {
+  'physics':   ['sci-physics'],
+  'chemistry': ['sci-chemistry', 'sci-chem-h'],
+  'biology':   ['sci-biology', 'sci-bio-h'],
+  'advanced':  [],
+};
+
 // Language level for each course in the world language sequence.
 // Value = the level at which a student is taking this course.
 // Used to anchor the language grid to the student's current level (state.langLevel),
@@ -157,6 +187,11 @@ function isCompleted(course) {
     const currentOrder = MATH_COURSE_ORDER[currentCourseId] ?? -1;
     const courseOrder = MATH_COURSE_ORDER[course.id] ?? 999;
     return courseOrder < currentOrder;
+  }
+  if (course.department === 'Science' && SCIENCE_GRADE_OFFSET[course.id] !== undefined) {
+    const currentSciOffset = SCIENCE_LEVEL_OFFSET[state.scienceLevel] ?? 0;
+    const courseOffset = SCIENCE_GRADE_OFFSET[course.id];
+    return courseOffset < currentSciOffset;
   }
   if (course.department === 'World Languages') {
     const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
@@ -238,28 +273,34 @@ function isRecommended(course) {
 const COENROLL_OK = new Set(['sci-blc-arts', 'sci-blc-pnw', 'sci-advphys-thermo']);
 
 function displayGrade(course) {
-  // Math: anchor the entire sequence to the student's current grade (9).
+  // Math: anchor the entire sequence to the student's current grade.
   // Both honors and standard tracks land in the same column so the parent
   // sees the alternatives side-by-side, not staggered across years.
+  // We do NOT clamp to course.grades minGrade — that would push accelerated students'
+  // current course into the wrong column. We only cap at grade 12.
   if (course.department === 'Math' && MATH_GRADE_OFFSET[course.id] !== undefined) {
     const currentCourseId = MATH_LEVEL_TO_COURSE[state.mathLevel];
     const currentOffset = MATH_GRADE_OFFSET[currentCourseId] ?? 1;
     const courseOffset = MATH_GRADE_OFFSET[course.id];
-    // Anchor math sequence to the student's current grade (not hardcoded to 9)
     const rawGrade = state.currentGrade + (courseOffset - currentOffset);
-    const minGrade = Math.min(...course.grades);
-    const maxGrade = Math.max(...course.grades);
-    return Math.min(Math.max(rawGrade, minGrade), maxGrade);
+    return Math.min(rawGrade, 12);
+  }
+
+  // Science: anchor core sequence (Physics → Chemistry → Biology) to the student's placement.
+  // Same approach as Math: no minGrade clamp; allow courses to appear in early columns
+  // for students who are ahead of the standard grade-9-starts-physics track.
+  if (course.department === 'Science' && SCIENCE_GRADE_OFFSET[course.id] !== undefined) {
+    const currentSciOffset = SCIENCE_LEVEL_OFFSET[state.scienceLevel] ?? 0;
+    const courseOffset = SCIENCE_GRADE_OFFSET[course.id];
+    const rawGrade = state.currentGrade + (courseOffset - currentSciOffset);
+    return Math.min(rawGrade, 12);
   }
 
   // World Languages: anchor the sequence to the student's current level and current grade.
   if (course.department === 'World Languages' && LANG_LEVEL_FOR_COURSE[course.id] !== undefined) {
     const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
-    // Anchor language sequence to the student's current grade (not hardcoded to 9)
     const rawGrade = state.currentGrade + (courseLevel - state.langLevel);
-    const minGrade = Math.min(...course.grades);
-    const maxGrade = Math.max(...course.grades);
-    return Math.min(Math.max(rawGrade, minGrade), maxGrade);
+    return Math.min(rawGrade, 12);
   }
 
   const minGrade = Math.min(...course.grades);
@@ -326,7 +367,11 @@ function renderGrid() {
       cell.className = 'cell';
 
       const gradeCourses = deptCourses.filter(c => {
-        if (!c.grades.includes(grade)) return false;
+        // For sequence-anchored departments, skip catalog grade range check —
+        // displayGrade() anchors the course to the student's actual placement year,
+        // which may differ from the catalog minGrade for accelerated students.
+        const isSequenceDept = ['Math', 'World Languages', 'Science'].includes(c.department);
+        if (!isSequenceDept && !c.grades.includes(grade)) return false;
         // Show each course only in its computed display grade (prereq-aware)
         if (displayGrade(c) !== grade) return false;
         // Filter World Languages to selected language only
@@ -670,6 +715,12 @@ function bindProfileControls() {
     renderPaths();
   });
 
+  document.getElementById('science-level')?.addEventListener('change', e => {
+    state.scienceLevel = e.target.value;
+    updateScienceHint();
+    renderGrid();
+  });
+
   document.getElementById('language')?.addEventListener('change', e => {
     state.language = e.target.value;
     updateLangHint();
@@ -735,6 +786,17 @@ function updateLangHint() {
   }
 }
 
+function updateScienceHint() {
+  const hints = {
+    'physics':   'Standard sequence: Physics → Chemistry → Biology → advanced electives.',
+    'chemistry': 'In Chemistry now. Biology next, then advanced science electives open up.',
+    'biology':   'In Biology now. Advanced Molecular Bio, Chemistry, Physics open next year.',
+    'advanced':  'Completed Physics, Chemistry & Biology. Focus on advanced electives.',
+  };
+  const el = document.getElementById('science-hint');
+  if (el) el.textContent = hints[state.scienceLevel] || '';
+}
+
 // ── CURRENT-COURSE MARKER ─────────────────────────────────────────────────────
 // Adds .current-placement to the card for the student's active math course
 // and active language course so the grid shows a "▶ now" indicator.
@@ -761,6 +823,12 @@ function markCurrentCourses() {
       break;
     }
   }
+
+  // Current science courses (mark both standard and accelerated tracks)
+  (SCIENCE_LEVEL_TO_COURSES[state.scienceLevel] || []).forEach(id => {
+    const card = gridBody.querySelector(`[data-course-id="${id}"]`);
+    if (card) card.classList.add('current-placement');
+  });
 }
 
 // ── INTEREST HIGHLIGHTING ─────────────────────────────────────────────────────
@@ -844,6 +912,7 @@ function init() {
   renderRequirements();
   bindProfileControls();
   updateMathHint();
+  updateScienceHint();
   updateLangHint();
 }
 
