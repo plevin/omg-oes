@@ -277,6 +277,7 @@ function isRecommended(course) {
   if (state.interests.english    && tags.includes('english'))    return true;
   if (state.interests.humanities && tags.includes('humanities')) return true;
   if (state.interests.lang       && tags.includes('language'))   return true;
+  if (state.interests.arts       && tags.includes('arts'))       return true;
 
   // Specific recommendations for this student
   if (state.interests.stem) {
@@ -350,9 +351,12 @@ function displayGrade(course) {
     }
   }
 
-  // Clamp to the course's own eligible grade range
+  // Clamp to the course's own eligible grade range.
+  // Also ensure the course doesn't appear in a grade column before the student's
+  // current grade — electives available to grades 9-12 should show in the current
+  // year for a 10th or 11th grader, not in the (already-past) grade-9 column.
   const maxGrade = Math.max(...course.grades);
-  return Math.min(effectiveGrade, maxGrade);
+  return Math.min(Math.max(effectiveGrade, state.currentGrade), maxGrade);
 }
 
 // ── GRID RENDERING ─────────────────────────────────────────────────────────
@@ -405,8 +409,8 @@ function renderGrid() {
       if (gradeCourses.length === 0) {
         cell.innerHTML = '<div class="empty-cell"></div>';
       } else {
-        const electives = gradeCourses.filter(c => c.tags.includes('senior-elective'));
-        const regular   = gradeCourses.filter(c => !c.tags.includes('senior-elective'));
+        const electives = gradeCourses.filter(c => c.tags.includes('senior-elective') || c.tags.includes('arts-elective'));
+        const regular   = gradeCourses.filter(c => !c.tags.includes('senior-elective') && !c.tags.includes('arts-elective'));
 
         // ── 1. Yearlong courses (no semester label — they're the required backbone)
         regular.filter(c => c.semester === 'yearlong')
@@ -432,16 +436,20 @@ function renderGrid() {
           cell.appendChild(semRow);
         }
 
-        // ── 3. Senior electives — one full-width collapsible widget.
-        //    Splitting into half-width Fall|Spring groups is too cramped.
-        //    Instead, sort fall/either first then spring; semester is shown
-        //    in each item's text ("Banned Books (fall)", etc.).
+        // ── 3. Elective groups — one full-width collapsible widget.
+        //    Senior English electives and Arts electives both use this pattern.
+        //    Courses sorted: yearlong → fall/either → spring.
         if (electives.length > 0) {
           const sorted = [
-            ...electives.filter(c => c.semester !== 'spring'),
+            ...electives.filter(c => c.semester === 'yearlong'),
+            ...electives.filter(c => c.semester !== 'spring' && c.semester !== 'yearlong'),
             ...electives.filter(c => c.semester === 'spring'),
           ];
-          cell.appendChild(buildElectiveGroup(sorted));
+          const isArts = deptDef.key === 'Arts';
+          cell.appendChild(buildElectiveGroup(sorted, isArts
+            ? { title: 'Arts Electives', chooseN: 1 }
+            : { title: 'Senior Electives', chooseN: 2 }
+          ));
         }
       }
 
@@ -506,7 +514,7 @@ function buildCourseCard(course) {
   return card;
 }
 
-function buildElectiveGroup(electives, { chooseN = 2 } = {}) {
+function buildElectiveGroup(electives, { title = 'Senior Electives', chooseN = 2 } = {}) {
   const group = document.createElement('div');
   group.className = 'elective-group';
   group.dataset.expanded = 'false';
@@ -514,7 +522,7 @@ function buildElectiveGroup(electives, { chooseN = 2 } = {}) {
   const header = document.createElement('div');
   header.className = 'elective-group-header';
   header.innerHTML = `
-    <span class="elective-group-title">Senior Electives</span>
+    <span class="elective-group-title">${title}</span>
     <span class="elective-group-meta">choose ${chooseN} · ${electives.length} options</span>
     <span class="elective-group-toggle">▼</span>
   `;
