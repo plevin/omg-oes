@@ -541,6 +541,33 @@ const COURSES = [
     prereqs: ['lang-chinese4'], unlocks: [],
     tags: ['language'], notes: 'Unrehearsed discussions on complex topics; long-form composition.', deadlineNote: null },
 
+  // ── ARTS ─────────────────────────────────────────────────────────────────
+  // Three representative courses covering the 1.5-credit (3-course) arts requirement.
+  // Many more options exist; these are the most useful for four-year planning.
+
+  { id: 'arts-studio-found', name: 'Studio Art Foundations', department: 'Arts', grades: [9, 10, 11, 12],
+    semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
+    prereqs: [], unlocks: ['arts-inquiry'],
+    tags: ['arts'],
+    notes: 'Intro to elements of art and design in 2D and 3D. Good first arts course. Can only be taken once.',
+    deadlineNote: null },
+
+  { id: 'arts-photo', name: 'Fine Art Photography', department: 'Arts', grades: [9, 10, 11, 12],
+    semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
+    prereqs: [], unlocks: ['arts-inquiry'],
+    tags: ['arts'],
+    notes: 'Darkroom to digital: pinhole cameras through Adobe Lightroom. Can be taken twice (advanced track second time).',
+    deadlineNote: null },
+
+  { id: 'arts-inquiry', name: 'Inquiry in Arts', department: 'Arts', grades: [11, 12],
+    semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
+    prereqs: ['arts-studio-found'],
+    prereqNotes: 'Must have completed 3 arts courses (1.5 credits). Signed proposal and approval required.',
+    unlocks: [],
+    tags: ['arts', 'unique', 'deadline'],
+    notes: 'Individualized advanced project: college portfolio, specialized medium, or interdisciplinary inquiry. Space limited by mentor availability.',
+    deadlineNote: 'PROPOSAL DEADLINE: End of junior year for the following fall or spring. First-come, first-served.' },
+
   // ── INTERDISCIPLINARY ────────────────────────────────────────────────────
 
   { id: 'inter-social-innovation', name: 'Social Innovation & Entrepreneurship', department: 'Interdisciplinary', grades: [12],

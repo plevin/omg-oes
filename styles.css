@@ -46,6 +46,12 @@
   --color-si-bg: #eaf3de;
   --color-si-text: #27500a;
 
+  /* Interest ring colors — match toggle tracks and card rings */
+  --ring-stem: #4f46e5;   /* indigo  — Deep STEM   */
+  --ring-cs:   #7c3aed;   /* violet  — CS track     */
+  --ring-lang: #0891b2;   /* cyan    — Language     */
+  --ring-arts: #d97706;   /* amber   — Arts         */
+
   --sidebar-width: 260px;
   --detail-width: 320px;
   --header-height: 52px;
@@ -424,7 +430,7 @@ html, body {
   border: 1px solid;
   padding: 8px 10px;
   cursor: pointer;
-  transition: transform 0.1s, box-shadow 0.1s, opacity 0.15s;
+  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
   position: relative;
 }
 
@@ -524,6 +530,53 @@ html, body {
 .badge-ap { background: var(--color-ap-bg); color: var(--color-ap-text); border: 1px solid #ed93b1; }
 .badge-si { background: var(--color-si-bg); color: var(--color-si-text); border: 1px solid #97c459; }
 .badge-completed { background: var(--color-completed-bg); color: var(--color-completed-text); border: 1px solid var(--color-completed-border); }
+
+/* ── INTEREST HIGHLIGHTING ─────────────────────────────────────────────── */
+
+/* Color ring on matching cards — sits on top of the existing status color */
+.course-card[data-ring="stem"] { box-shadow: 0 0 0 2.5px var(--ring-stem), 0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="cs"]   { box-shadow: 0 0 0 2.5px var(--ring-cs),   0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="lang"] { box-shadow: 0 0 0 2.5px var(--ring-lang), 0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="arts"] { box-shadow: 0 0 0 2.5px var(--ring-arts), 0 2px 6px rgba(0,0,0,0.08); }
+
+/* When any interest is active, dim optional courses that don't match */
+.grid-body.interest-active .course-card:not(.interest-match):not(.status-required):not(.status-completed):not(.status-locked) {
+  opacity: 0.18;
+}
+
+/* Peek on hover so dimmed cards are still accessible */
+.grid-body.interest-active .course-card:not(.interest-match):not(.status-required):not(.status-completed):not(.status-locked):hover {
+  opacity: 0.65;
+}
+
+/* ── CURRENT PLACEMENT MARKER ──────────────────────────────────────────── */
+
+/* The card for the student's current math or language course */
+.course-card.current-placement {
+  border-left-width: 3px;
+  border-left-color: #1a5c2e !important;
+}
+
+/* "▶ now" label injected before the card name */
+.course-card.current-placement::before {
+  content: '▶ now';
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  color: #1a5c2e;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 3px;
+  opacity: 0.75;
+}
+
+/* ── COLOR-CODED INTEREST TOGGLES ──────────────────────────────────────── */
+/* Each toggle track matches the ring color for that interest category */
+
+#toggle-stem:checked ~ .toggle-track { background: var(--ring-stem); }
+#toggle-cs:checked   ~ .toggle-track { background: var(--ring-cs);   }
+#toggle-lang:checked ~ .toggle-track { background: var(--ring-lang); }
+#toggle-arts:checked ~ .toggle-track { background: var(--ring-arts); }
 
 /* ── CRITICAL PATHS VIEW ───────────────────────────────────────────────── */
 .paths-container {

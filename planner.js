@@ -25,6 +25,7 @@ const DEPT_ROWS = [
   { key: 'Science',           label: 'Science' },
   { key: 'CS',                label: 'CS' },
   { key: 'World Languages',   label: 'Languages' },
+  { key: 'Arts',              label: 'Arts' },
   { key: 'Religion & Philosophy', label: 'Religion' },
   { key: 'Health',            label: 'Health / PE' },
   { key: 'Interdisciplinary', label: 'Interdisciplinary' },
@@ -322,6 +323,10 @@ function renderGrid() {
 
     gridBody.appendChild(row);
   });
+
+  // Apply dynamic overlays after all cards are in the DOM
+  markCurrentCourses();
+  updateInterestHighlights();
 }
 
 function buildCourseCard(course) {
@@ -329,6 +334,8 @@ function buildCourseCard(course) {
   const card = document.createElement('div');
   card.className = `course-card status-${status}`;
   card.dataset.courseId = course.id;
+  card.dataset.tags = (course.tags || []).join(' ');
+  card.dataset.dept = course.department;
 
   if (status !== 'locked' && status !== 'completed') {
     card.addEventListener('click', () => showDetail(course.id));
@@ -658,6 +665,65 @@ function updateLangHint() {
   } else {
     el.textContent = `${yearsToAP} more year${yearsToAP !== 1 ? 's' : ''} to reach ${apLabel}`;
   }
+}
+
+// ── CURRENT-COURSE MARKER ─────────────────────────────────────────────────────
+// Adds .current-placement to the card for the student's active math course
+// and active language course so the grid shows a "▶ now" indicator.
+
+function markCurrentCourses() {
+  const gridBody = document.getElementById('grid-body');
+  if (!gridBody) return;
+
+  // Clear previous markers
+  gridBody.querySelectorAll('.current-placement').forEach(el => el.classList.remove('current-placement'));
+
+  // Current math course
+  const currentMathId = MATH_LEVEL_TO_COURSE[state.mathLevel];
+  if (currentMathId) {
+    const card = gridBody.querySelector(`[data-course-id="${currentMathId}"]`);
+    if (card) card.classList.add('current-placement');
+  }
+
+  // Current language course: find the course at exactly state.langLevel for the chosen language
+  for (const [id, level] of Object.entries(LANG_LEVEL_FOR_COURSE)) {
+    if (level === state.langLevel && id.startsWith(`lang-${state.language}`)) {
+      const card = gridBody.querySelector(`[data-course-id="${id}"]`);
+      if (card) card.classList.add('current-placement');
+      break;
+    }
+  }
+}
+
+// ── INTEREST HIGHLIGHTING ─────────────────────────────────────────────────────
+// Applies color rings to courses matching active interests,
+// and dims optional courses that don't match any active interest.
+
+function updateInterestHighlights() {
+  const gridBody = document.getElementById('grid-body');
+  if (!gridBody) return;
+
+  const anyActive = state.interests.stem || state.interests.cs || state.interests.lang || state.interests.arts;
+  gridBody.classList.toggle('interest-active', anyActive);
+
+  gridBody.querySelectorAll('.course-card').forEach(card => {
+    const tags = (card.dataset.tags || '').split(' ');
+
+    // Determine ring color by priority: cs > stem > lang > arts
+    let ring = '';
+    if      (state.interests.cs   && tags.includes('cs'))       ring = 'cs';
+    else if (state.interests.stem && tags.includes('stem'))     ring = 'stem';
+    else if (state.interests.lang && tags.includes('language')) ring = 'lang';
+    else if (state.interests.arts && tags.includes('arts'))     ring = 'arts';
+
+    card.classList.toggle('interest-match', !!ring);
+
+    if (ring) {
+      card.dataset.ring = ring;
+    } else {
+      delete card.dataset.ring;
+    }
+  });
 }
 
 // ── GRADUATION REQUIREMENTS PANEL ────────────────────────────────────────────
