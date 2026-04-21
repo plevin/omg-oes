@@ -432,26 +432,16 @@ function renderGrid() {
           cell.appendChild(semRow);
         }
 
-        // ── 3. Senior electives split into fall and spring groups
+        // ── 3. Senior electives — one full-width collapsible widget.
+        //    Splitting into half-width Fall|Spring groups is too cramped.
+        //    Instead, sort fall/either first then spring; semester is shown
+        //    in each item's text ("Banned Books (fall)", etc.).
         if (electives.length > 0) {
-          const fallEl   = electives.filter(c => c.semester !== 'spring');
-          const springEl = electives.filter(c => c.semester === 'spring');
-
-          if (fallEl.length > 0 || springEl.length > 0) {
-            const semRow = document.createElement('div');
-            semRow.className = 'cell-semesters';
-            if (fallEl.length > 0) {
-              const half = makeSemHalf('Fall');
-              half.appendChild(buildElectiveGroup(fallEl, { chooseN: 1 }));
-              semRow.appendChild(half);
-            }
-            if (springEl.length > 0) {
-              const half = makeSemHalf('Spring');
-              half.appendChild(buildElectiveGroup(springEl, { chooseN: 1 }));
-              semRow.appendChild(half);
-            }
-            cell.appendChild(semRow);
-          }
+          const sorted = [
+            ...electives.filter(c => c.semester !== 'spring'),
+            ...electives.filter(c => c.semester === 'spring'),
+          ];
+          cell.appendChild(buildElectiveGroup(sorted));
         }
       }
 

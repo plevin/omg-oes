@@ -432,6 +432,10 @@ html, body {
 .cell-semesters {
   display: flex;
   gap: 4px;
+}
+
+/* Only draw the dashed separator when yearlong content sits above */
+.cell > .cell-semesters:not(:first-child) {
   margin-top: 4px;
   padding-top: 5px;
   border-top: 1px dashed var(--color-border);
