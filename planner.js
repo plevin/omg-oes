@@ -288,6 +288,336 @@ function isRecommended(course) {
   return false;
 }
 
+// ── PLAN STATE ────────────────────────────────────────────────────────────
+// plan: courses the student has explicitly added to their schedule
+// lockedCourses: auto-seeded from profile; cannot be removed
+
+const plan = new Set();
+const lockedCourses = new Set();
+
+// Maps language + level to the canonical current course ID
+const LANG_CURRENT_COURSE_ID = {
+  spanish: { 1:'lang-spanish1', 2:'lang-spanish2', 3:'lang-spanish3', 4:'lang-spanish4', 5:'lang-ap-spanish' },
+  french:  { 2:'lang-french2',  3:'lang-french3',  4:'lang-french4',  5:'lang-ap-french' },
+  chinese: { 2:'lang-chinese2', 3:'lang-chinese3', 4:'lang-chinese4', 5:'lang-chinese5'  },
+};
+
+function seedLockedCourses() {
+  lockedCourses.clear();
+
+  // Current math course
+  const mathId = MATH_LEVEL_TO_COURSE[state.mathLevel];
+  if (mathId) lockedCourses.add(mathId);
+
+  // Current science course (standard/first track; student may be in honors instead)
+  const sciIds = SCIENCE_LEVEL_TO_COURSES[state.scienceLevel] || [];
+  if (sciIds[0]) lockedCourses.add(sciIds[0]);
+
+  // Current language course
+  const langId = LANG_CURRENT_COURSE_ID[state.language]?.[state.langLevel];
+  if (langId) lockedCourses.add(langId);
+
+  // English: grades 9–11 are fixed; grade 12 is student-chosen electives
+  const engForGrade = { 9: 'eng9', 10: 'eng10', 11: 'eng11' };
+  const engId = engForGrade[state.currentGrade];
+  if (engId) lockedCourses.add(engId);
+
+  // History: grades 9–10 are fixed; grades 11–12 are elective choices
+  const histForGrade = { 9: 'hist-global', 10: 'hist-us' };
+  const histId = histForGrade[state.currentGrade];
+  if (histId) lockedCourses.add(histId);
+
+  // Health (required in grade 9)
+  if (state.currentGrade === 9) lockedCourses.add('health');
+
+  // Winterim — happens every year; lock it in each year's Special cell
+  lockedCourses.add('winterim');
+
+  // Remove any manually-planned courses that are now locked
+  for (const id of lockedCourses) plan.delete(id);
+}
+
+function canPlan(courseId) {
+  const course = getCourseById(courseId);
+  if (!course) return false;
+  return (course.prereqs || []).every(prereqId => {
+    if (plan.has(prereqId) || lockedCourses.has(prereqId)) return true;
+    const prereq = getCourseById(prereqId);
+    return prereq ? isCompleted(prereq) : true; // unknown prereq → don't block
+  });
+}
+
+function togglePlan(courseId) {
+  if (lockedCourses.has(courseId)) return;
+  if (plan.has(courseId)) plan.delete(courseId);
+  else plan.add(courseId);
+  savePlan();
+  renderPlanGrid();
+}
+
+function savePlan() {
+  try { localStorage.setItem('oes-plan-v1', JSON.stringify([...plan])); } catch(e) {}
+}
+
+function loadPlan() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('oes-plan-v1') || '[]');
+    plan.clear();
+    saved.forEach(id => plan.add(id));
+  } catch(e) { plan.clear(); }
+}
+
+function refreshPlanForProfileChange() {
+  seedLockedCourses();
+  savePlan();
+  if (!document.getElementById('view-plan')?.classList.contains('hidden')) {
+    renderPlanGrid();
+  }
+}
+
+// Counts academic slot-load for a grade year (excludes Special dept)
+// 1 yearlong = 1 slot; 1 semester course = 0.5 slot; max 6 (7th requires approval)
+function computeCapacity(grade) {
+  let slots = 0;
+  for (const id of [...lockedCourses, ...plan]) {
+    const c = getCourseById(id);
+    if (!c || c.department === 'Special') continue;
+    // Winterim is already excluded via Special dept; health/other fixed counts
+    const cGrade = c.id === 'winterim' ? null : displayGrade(c);
+    if (cGrade !== grade) continue;
+    slots += c.semester === 'yearlong' ? 1 : 0.5;
+  }
+  return slots;
+}
+
+function capacityDots(slots, max = 6) {
+  const full  = Math.floor(slots);
+  const half  = (slots % 1) >= 0.5 ? 1 : 0;
+  const empty = Math.max(0, max - full - half);
+  return '●'.repeat(full) + (half ? '◐' : '') + '○'.repeat(empty);
+}
+
+// ── PLAN RENDERING ────────────────────────────────────────────────────────
+
+function renderPlanGrid() {
+  const header = document.getElementById('plan-grid-header');
+  const body   = document.getElementById('plan-grid-body');
+  if (!header || !body) return;
+
+  const grades = [];
+  for (let g = state.currentGrade; g <= 12; g++) grades.push(g);
+
+  document.getElementById('plan-grid-container')
+    ?.style.setProperty('--grid-cols', grades.length);
+
+  // ── Header with capacity bars ──────────────────────────────────────────
+  header.innerHTML = '<div class="grid-corner"></div>';
+  grades.forEach(grade => {
+    const slots = computeCapacity(grade);
+    const colorClass = slots >= 6 ? 'capacity-red' : slots >= 5.5 ? 'capacity-amber' : '';
+    const col = document.createElement('div');
+    col.className = 'grade-label';
+    col.innerHTML = `
+      Grade ${grade} <span class="grade-year">${schoolYear(grade)}</span>
+      <div class="capacity-bar ${colorClass}" title="${slots} of 6 slots used">
+        ${capacityDots(slots)} <span class="capacity-num">${slots}/6</span>
+      </div>`;
+    header.appendChild(col);
+  });
+
+  // ── Plan body ──────────────────────────────────────────────────────────
+  body.innerHTML = '';
+
+  DEPT_ROWS.forEach(deptDef => {
+    const deptCourses = COURSES.filter(c => c.department === deptDef.key);
+    if (deptCourses.length === 0) return;
+
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.textContent = deptDef.label;
+    row.appendChild(label);
+
+    grades.forEach(grade => {
+      row.appendChild(buildPlanCell(deptDef.key, grade, deptCourses));
+    });
+
+    body.appendChild(row);
+  });
+
+  renderWhatsLeft();
+}
+
+function buildPlanCell(dept, grade, deptCourses) {
+  const cell = document.createElement('div');
+  cell.className = 'cell plan-cell';
+
+  // Locked courses in this dept+grade
+  // Winterim special-case: show in EVERY grade year (it's annual)
+  const lockedHere = [...lockedCourses]
+    .map(id => getCourseById(id))
+    .filter(c => {
+      if (!c || c.department !== dept) return false;
+      if (c.id === 'winterim') return c.grades.includes(grade);
+      return displayGrade(c) === grade;
+    });
+
+  // Manually planned courses in this dept+grade
+  const plannedHere = [...plan]
+    .map(id => getCourseById(id))
+    .filter(c => {
+      if (!c || c.department !== dept) return false;
+      // Arts: allow any grade the course is available in
+      if (dept === 'Arts') return c.grades.includes(grade) && displayGrade(c) <= grade;
+      return displayGrade(c) === grade;
+    });
+
+  lockedHere.forEach(c  => cell.appendChild(buildPlanCard(c, 'locked-in')));
+  plannedHere.forEach(c => cell.appendChild(buildPlanCard(c, 'planned')));
+
+  // "+ add" slot — only show if there are unplanned options for this dept+grade
+  const addSlot = buildAddSlot(dept, grade, deptCourses);
+  if (addSlot) cell.appendChild(addSlot);
+
+  if (lockedHere.length === 0 && plannedHere.length === 0 && !addSlot) {
+    cell.innerHTML = '<div class="empty-cell"></div>';
+  }
+
+  return cell;
+}
+
+function buildPlanCard(course, status) {
+  const card = document.createElement('div');
+  card.className = `course-card plan-card status-${status}`;
+  card.dataset.courseId = course.id;
+
+  const name = document.createElement('div');
+  name.className = 'card-name';
+  name.textContent = course.name;
+  card.appendChild(name);
+
+  if (course.honors) card.appendChild(makeBadge('H', 'honors'));
+  if (course.ap)     card.appendChild(makeBadge('AP', 'ap'));
+
+  if (course.semester !== 'yearlong') {
+    const sem = document.createElement('div');
+    sem.className = 'card-sem';
+    sem.textContent = { fall: 'fall', spring: 'spring', 'fall-spring': 'fall or spring' }[course.semester] ?? course.semester;
+    card.appendChild(sem);
+  }
+
+  if (status === 'locked-in') {
+    const icon = document.createElement('span');
+    icon.className = 'card-lock-icon';
+    icon.title = 'Current placement — cannot be removed';
+    icon.textContent = '🔒';
+    card.appendChild(icon);
+    card.addEventListener('click', () => showDetail(course.id));
+  } else {
+    card.addEventListener('click', () => togglePlan(course.id));
+  }
+
+  return card;
+}
+
+function buildAddSlot(dept, grade, deptCourses) {
+  const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
+    if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
+    if (c.id === 'winterim') return false;
+    // Arts: available any year the course lists; show from first-eligible grade onward
+    if (dept === 'Arts') return c.grades.includes(grade) && displayGrade(c) <= grade;
+    return displayGrade(c) === grade;
+  });
+
+  if (eligible.length === 0) return null;
+
+  const slot = document.createElement('div');
+  slot.className = 'add-slot';
+
+  const btn = document.createElement('button');
+  btn.className = 'add-slot-btn';
+  btn.textContent = `+ add`;
+
+  const picker = document.createElement('div');
+  picker.className = 'add-slot-picker hidden';
+
+  // Populate picker items
+  eligible.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
+    const item = document.createElement('div');
+    const warn = !canPlan(c.id);
+    item.className = `add-slot-item${warn ? ' prereq-warn' : ''}`;
+    const semLabel = { fall: '· fall', spring: '· spring', 'fall-spring': '· fall or spring', yearlong: '' }[c.semester] ?? '';
+    item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel}${warn ? ' ⚠ prereq' : ''}</span>`;
+    item.addEventListener('click', e => {
+      e.stopPropagation();
+      plan.add(c.id);
+      savePlan();
+      picker.classList.add('hidden');
+      renderPlanGrid();
+    });
+    picker.appendChild(item);
+  });
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    document.querySelectorAll('.add-slot-picker:not(.hidden)').forEach(p => {
+      if (p !== picker) p.classList.add('hidden');
+    });
+    picker.classList.toggle('hidden');
+    if (!picker.classList.contains('hidden')) {
+      setTimeout(() => document.addEventListener('click', () => picker.classList.add('hidden'), { once: true }), 0);
+    }
+  });
+
+  slot.appendChild(btn);
+  slot.appendChild(picker);
+  return slot;
+}
+
+// ── WHAT'S LEFT FOOTER ────────────────────────────────────────────────────
+
+function renderWhatsLeft() {
+  const container = document.getElementById('whats-left');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  // Credit totals by department (locked + planned)
+  const credits = {};
+  for (const id of [...lockedCourses, ...plan]) {
+    const c = getCourseById(id);
+    if (!c) continue;
+    const dept = c.department;
+    credits[dept] = (credits[dept] || 0) + (c.semester === 'yearlong' ? 1 : 0.5);
+  }
+
+  const reqs = [
+    { dept: 'English',               label: 'English',   required: 4,   unit: 'yr'  },
+    { dept: 'History',               label: 'History',   required: 2,   unit: 'cr'  },
+    { dept: 'Math',                  label: 'Math',      required: 3,   unit: 'yr'  },
+    { dept: 'Science',               label: 'Science',   required: 3,   unit: 'yr'  },
+    { dept: 'World Languages',       label: 'Language',  required: 2,   unit: 'yr'  },
+    { dept: 'Arts',                  label: 'Arts',      required: 1.5, unit: 'cr'  },
+    { dept: 'Religion & Philosophy', label: 'Religion',  required: 2,   unit: 'cr'  },
+    { dept: 'Health',                label: 'Health',    required: 1,   unit: 'cr'  },
+  ];
+
+  reqs.forEach(req => {
+    const have = credits[req.dept] || 0;
+    const met  = have >= req.required;
+    const partial = have > 0 && !met;
+
+    const pill = document.createElement('div');
+    pill.className = `req-pill ${met ? 'req-met' : partial ? 'req-partial' : 'req-missing'}`;
+    pill.innerHTML = met
+      ? `<span class="pill-label">${req.label}</span><span class="pill-check">✓ ${have}${req.unit}</span>`
+      : `<span class="pill-label">${req.label}</span><span class="pill-count">${have}/${req.required}${req.unit}</span>`;
+    container.appendChild(pill);
+  });
+}
+
 // ── DISPLAY GRADE COMPUTATION ─────────────────────────────────────────────
 // Returns the grade column where this course should appear.
 // Uses min(course.grades) but bumps forward when prereqs aren't finishable
@@ -371,7 +701,7 @@ function renderGrid() {
 
   // Sync column count to CSS so header and rows stay aligned
   const numCols = grades.length;
-  document.querySelector('.grid-container')?.style.setProperty('--grid-cols', numCols);
+  document.querySelector('#view-grid .grid-container')?.style.setProperty('--grid-cols', numCols);
 
   gridBody.innerHTML = '';
 
@@ -784,10 +1114,15 @@ function closeDetail() {
 // ── VIEW SWITCHING ──────────────────────────────────────────────────────────
 
 function switchView(viewName) {
-  ['grid', 'paths', 'deadlines'].forEach(v => {
-    document.getElementById(`view-${v}`).classList.toggle('hidden', v !== viewName);
-    document.getElementById(`tab-${v}`).classList.toggle('active', v === viewName);
+  ['grid', 'plan', 'paths', 'deadlines'].forEach(v => {
+    document.getElementById(`view-${v}`)?.classList.toggle('hidden', v !== viewName);
+    document.getElementById(`tab-${v}`)?.classList.toggle('active', v === viewName);
   });
+  if (viewName === 'plan') {
+    seedLockedCourses();
+    loadPlan();
+    renderPlanGrid();
+  }
 }
 
 // ── GRID HEADER & PLAN LABEL ─────────────────────────────────────────────────
@@ -799,8 +1134,8 @@ function renderGridHeader() {
   const grades = [];
   for (let g = state.currentGrade; g <= 12; g++) grades.push(g);
 
-  // Sync CSS column count
-  document.querySelector('.grid-container')?.style.setProperty('--grid-cols', grades.length);
+  // Sync CSS column count on the catalog grid only
+  document.querySelector('#view-grid .grid-container')?.style.setProperty('--grid-cols', grades.length);
 
   // Rebuild header: corner + one label per grade
   header.innerHTML = '<div class="grid-corner"></div>';
@@ -832,6 +1167,7 @@ function bindProfileControls() {
     updatePlanLabel();
     renderGrid();
     renderPaths();
+    refreshPlanForProfileChange();
   });
 
   document.getElementById('math-level')?.addEventListener('change', e => {
@@ -839,18 +1175,21 @@ function bindProfileControls() {
     updateMathHint();
     renderGrid();
     renderPaths();
+    refreshPlanForProfileChange();
   });
 
   document.getElementById('science-level')?.addEventListener('change', e => {
     state.scienceLevel = e.target.value;
     updateScienceHint();
     renderGrid();
+    refreshPlanForProfileChange();
   });
 
   document.getElementById('language')?.addEventListener('change', e => {
     state.language = e.target.value;
     updateLangHint();
     renderGrid();
+    refreshPlanForProfileChange();
   });
 
   document.getElementById('lang-level')?.addEventListener('change', e => {
@@ -858,6 +1197,7 @@ function bindProfileControls() {
     updateLangHint();
     renderGrid();
     renderPaths();
+    refreshPlanForProfileChange();
   });
 
   document.getElementById('toggle-stem')?.addEventListener('change', e => {

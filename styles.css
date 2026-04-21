@@ -1072,6 +1072,164 @@ html, body {
   .card-name { font-size: 10px; }
 }
 
+/* ── MY PLAN VIEW ──────────────────────────────────────────────────────── */
+
+/* Plan view fills the main content area with the what's-left strip pinned at bottom */
+.plan-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.plan-grid-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Capacity bar under each grade-year column header */
+.capacity-bar {
+  font-size: 10px;
+  color: var(--color-text-hint);
+  letter-spacing: 1.5px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.capacity-bar.capacity-amber { color: #d97706; }
+.capacity-bar.capacity-red   { color: #dc2626; font-weight: 600; }
+.capacity-num { font-size: 9px; letter-spacing: 0; }
+
+/* Plan cells */
+.plan-cell { gap: 4px; }
+
+/* Plan course cards ─ locked-in (green) and planned (blue) */
+.plan-card { position: relative; cursor: pointer; }
+
+.status-locked-in {
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  cursor: default;
+}
+.status-locked-in:hover { border-color: #4ade80; }
+.card-lock-icon {
+  position: absolute;
+  top: 4px; right: 5px;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.status-planned {
+  background: #eff6ff;
+  border: 2px solid #93c5fd;
+}
+.status-planned::after {
+  content: '✕ remove';
+  display: block;
+  font-size: 9px;
+  color: var(--color-text-hint);
+  margin-top: 3px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.status-planned:hover::after { opacity: 1; }
+.status-planned:hover { border-color: #3b82f6; }
+
+/* "+ add" slot at the bottom of each plan cell */
+.add-slot {
+  position: relative;
+  margin-top: 2px;
+}
+
+.add-slot-btn {
+  width: 100%;
+  padding: 5px 6px;
+  font-size: 11px;
+  color: var(--color-text-hint);
+  background: transparent;
+  border: 1px dashed var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+.add-slot-btn:hover {
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  border-color: var(--color-text-hint);
+}
+
+/* Dropdown picker that opens from the add button */
+.add-slot-picker {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: 0;
+  min-width: 200px;
+  max-width: 260px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+  z-index: 200;
+}
+
+.add-slot-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.1s;
+}
+.add-slot-item:last-child { border-bottom: none; }
+.add-slot-item:hover { background: var(--color-surface-raised); }
+.add-slot-item.prereq-warn { opacity: 0.55; }
+
+.add-item-name { flex: 1; }
+.add-item-meta {
+  font-size: 10px;
+  color: var(--color-text-hint);
+  white-space: nowrap;
+}
+
+/* ── WHAT'S LEFT STRIP ──────────────────────────────────────────────────── */
+
+.whats-left-strip {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 16px;
+  background: var(--color-surface);
+  border-top: 2px solid var(--color-border);
+  z-index: 20;
+}
+
+.req-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.req-met     { background: #dcfce7; color: #16a34a; }
+.req-partial { background: #fef3c7; color: #b45309; }
+.req-missing { background: #fee2e2; color: #dc2626; }
+
+.pill-label { opacity: 0.8; }
+.pill-check { font-weight: 700; }
+.pill-count { font-weight: 600; }
+
 /* ── UTILITIES ─────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 

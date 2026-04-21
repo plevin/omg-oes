@@ -151,7 +151,8 @@
       <header class="top-bar">
         <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
         <div class="view-tabs">
-          <button class="tab-btn active" onclick="switchView('grid')" id="tab-grid">Four-year plan</button>
+          <button class="tab-btn active" onclick="switchView('grid')" id="tab-grid">Course Catalog</button>
+          <button class="tab-btn" onclick="switchView('plan')" id="tab-plan">My Plan</button>
           <button class="tab-btn" onclick="switchView('paths')" id="tab-paths">Critical paths</button>
           <button class="tab-btn" onclick="switchView('deadlines')" id="tab-deadlines">
             Deadlines
@@ -171,6 +172,21 @@
           <div class="grid-body" id="grid-body">
             <!-- Rows injected by planner.js -->
           </div>
+        </div>
+      </div>
+
+      <!-- VIEW: MY PLAN -->
+      <div class="view hidden plan-view" id="view-plan">
+        <div class="plan-grid-scroll">
+          <div class="grid-container" id="plan-grid-container">
+            <div class="grid-header" id="plan-grid-header">
+              <div class="grid-corner"></div>
+            </div>
+            <div class="grid-body" id="plan-grid-body"></div>
+          </div>
+        </div>
+        <div class="whats-left-strip" id="whats-left">
+          <!-- Injected by renderWhatsLeft() -->
         </div>
       </div>
 
