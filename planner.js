@@ -393,12 +393,24 @@ function renderGrid() {
       const cell = document.createElement('div');
       cell.className = 'cell';
 
+      const isArtsRow = deptDef.key === 'Arts';
+      const isArtsLaterYear = isArtsRow && grade > state.currentGrade;
+
       const gradeCourses = deptCourses.filter(c => {
         // For sequence-anchored departments, skip catalog grade range check —
         // displayGrade() anchors the course to the student's actual placement year,
         // which may differ from the catalog minGrade for accelerated students.
         const isSequenceDept = ['Math', 'World Languages', 'Science'].includes(c.department);
         if (!isSequenceDept && !c.grades.includes(grade)) return false;
+
+        // Arts courses: in the current grade show everything available so far;
+        // in later grade columns show only newly-unlocked (prereq-gated) courses.
+        // A compact "↺ recurring" chip covers the continuing open-entry options.
+        if (isArtsRow) {
+          if (grade === state.currentGrade) return displayGrade(c) <= grade;
+          return displayGrade(c) === grade;
+        }
+
         // Show each course only in its computed display grade (prereq-aware)
         if (displayGrade(c) !== grade) return false;
         // Filter World Languages to selected language only
@@ -406,11 +418,48 @@ function renderGrid() {
         return true;
       });
 
+      // Arts later-year columns: always show the "recurring" chip even if nothing new
+      if (isArtsLaterYear) {
+        const chip = document.createElement('div');
+        chip.className = 'arts-recurring-note';
+        chip.textContent = `↺ arts electives available each year`;
+        cell.appendChild(chip);
+      }
+
       if (gradeCourses.length === 0) {
-        cell.innerHTML = '<div class="empty-cell"></div>';
+        if (!isArtsLaterYear) cell.innerHTML = '<div class="empty-cell"></div>';
+      } else if (isArtsRow && !isArtsLaterYear) {
+        // ── Arts current-year cell: semester-split elective widgets + yearlong card.
+        //    Too many courses to show as individual cards; split into Fall/Spring
+        //    widgets so the student can see the semester structure at a glance.
+        const yearlong  = gradeCourses.filter(c => c.semester === 'yearlong');
+        const fallGroup = gradeCourses.filter(c => c.semester === 'fall' || c.semester === 'fall-spring');
+        const springGroup = gradeCourses.filter(c => c.semester === 'spring');
+
+        yearlong.forEach(c => cell.appendChild(buildCourseCard(c)));
+
+        const semRow = document.createElement('div');
+        semRow.className = 'cell-semesters';
+
+        if (fallGroup.length > 0) {
+          const half = makeSemHalf('Fall');
+          half.appendChild(buildElectiveGroup(fallGroup, { title: 'Arts Options', chooseN: 1 }));
+          semRow.appendChild(half);
+        }
+        if (springGroup.length > 0) {
+          const half = makeSemHalf('Spring');
+          // If only a few spring options, show them as individual cards instead of a widget
+          if (springGroup.length <= 3) {
+            springGroup.forEach(c => half.appendChild(buildCourseCard(c)));
+          } else {
+            half.appendChild(buildElectiveGroup(springGroup, { title: 'Arts Options', chooseN: 1 }));
+          }
+          semRow.appendChild(half);
+        }
+        cell.appendChild(semRow);
       } else {
-        const electives = gradeCourses.filter(c => c.tags.includes('senior-elective') || c.tags.includes('arts-elective'));
-        const regular   = gradeCourses.filter(c => !c.tags.includes('senior-elective') && !c.tags.includes('arts-elective'));
+        const electives = gradeCourses.filter(c => c.tags.includes('senior-elective'));
+        const regular   = gradeCourses.filter(c => !c.tags.includes('senior-elective'));
 
         // ── 1. Yearlong courses (no semester label — they're the required backbone)
         regular.filter(c => c.semester === 'yearlong')
@@ -436,8 +485,7 @@ function renderGrid() {
           cell.appendChild(semRow);
         }
 
-        // ── 3. Elective groups — one full-width collapsible widget.
-        //    Senior English electives and Arts electives both use this pattern.
+        // ── 3. Senior electives — one full-width collapsible widget.
         //    Courses sorted: yearlong → fall/either → spring.
         if (electives.length > 0) {
           const sorted = [
@@ -445,11 +493,7 @@ function renderGrid() {
             ...electives.filter(c => c.semester !== 'spring' && c.semester !== 'yearlong'),
             ...electives.filter(c => c.semester === 'spring'),
           ];
-          const isArts = deptDef.key === 'Arts';
-          cell.appendChild(buildElectiveGroup(sorted, isArts
-            ? { title: 'Arts Electives', chooseN: 1 }
-            : { title: 'Senior Electives', chooseN: 2 }
-          ));
+          cell.appendChild(buildElectiveGroup(sorted));
         }
       }
 

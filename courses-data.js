@@ -552,15 +552,14 @@ const COURSES = [
   // ── ARTS ─────────────────────────────────────────────────────────────────
   // Full Visual, Performing, and Musical Arts catalog (pp. 46–53, April 2026 guide).
   // Grad requirement: 3 semesters (1.5 credits) in Visual Art, Performing Arts, or Music.
-  // All courses open to grades 9–12 unless noted. All tagged 'arts-elective' so they
-  // collapse into the Arts Electives widget rather than flooding the grid cell.
+  // All courses open to grades 9–12 unless noted.
 
   // ── Yearlong ──
   { id: 'arts-band', name: 'Symphonic Band', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: [], prereqNotes: 'Prior instrumental experience strongly recommended.',
     unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective', 'unique'],
+    tags: ['arts', 'unique'],
     notes: 'Wind ensemble — concerts and state festivals. Can be taken as a 7th course with approval. No repeat limit.',
     deadlineNote: null },
 
@@ -569,14 +568,14 @@ const COURSES = [
     semester: 'fall', honors: false, ap: false, socialImpact: false,
     prereqs: [], prereqNotes: 'Intermediate/advanced class; prior theater experience recommended.',
     unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Advanced acting, directing, and improv. Prepares for Spring Extravaganza. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-ceramics-adv', name: 'Advanced Ceramics', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall', honors: false, ap: false, socialImpact: false,
     prereqs: ['arts-ceramics-intro'], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Expand foundational ceramic skills; develop individual projects and artistic voice. Can be taken twice.',
     deadlineNote: null },
 
@@ -585,14 +584,14 @@ const COURSES = [
     prereqs: ['arts-studio-found'],
     prereqNotes: 'Any Upper School visual art class. Application with portfolio submission required.',
     unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective', 'deadline'],
+    tags: ['arts', 'deadline'],
     notes: 'Honors-level. Develop a sustained personal artistic voice through divergent and convergent creative processes.',
     deadlineNote: 'APPLICATION DEADLINE: Friday, May 8. Portfolio submission + application form required. See curriculum guide.' },
 
   { id: 'arts-scriptwriting', name: 'Scriptwriting Workshop', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Create and refine scripts for live performance, graphic novels, and digital video. No repeat limit.',
     deadlineNote: null },
 
@@ -600,21 +599,21 @@ const COURSES = [
   { id: 'arts-actors-film', name: "Actor's Studio: Film", department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Filmmaking, screenwriting, cinematography, lighting, editing. Culminates in a film festival. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-digital-illus-adv', name: 'Advanced Digital Illustration', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'spring', honors: false, ap: false, socialImpact: false,
     prereqs: ['arts-digital-illus'], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Advanced Procreate and Adobe: animation, letterforms, custom brushes, cohesive body of work. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-stage-screen', name: 'Design for Stage and Screen', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Technical theater: lighting, sound, costumes, props, sets, and digital video for the Spring Extravaganza. Can be taken twice.',
     deadlineNote: null },
 
@@ -622,42 +621,42 @@ const COURSES = [
   { id: 'arts-3d-design', name: '3D Design and Prototyping', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Product design, CAD, Glowforge (laser cutter), rapid prototyping, 3D printing. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-apparel', name: 'Apparel Design', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: true,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Clothing design, sewing, pattern-making, sustainable fashion. End-of-semester runway show. Social Impact class. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-color-design', name: 'Color, Design, and Symbol', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Color theory, design history, and symbol across many media (drawing, digital, object-building). Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-digital-illus', name: 'Digital Illustration', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-digital-illus-adv', 'arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Procreate-based digital illustration: layers, brushes, composition, color theory. No prior experience needed. Can only be taken once.',
     deadlineNote: null },
 
   { id: 'arts-digital-story', name: 'Digital Storytelling', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Audio/video production, podcasting, Logic Pro and Final Cut Pro. No prior experience needed. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-drawing-painting', name: 'Drawing and Painting', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Contour, gesture, perspective, shading, and acrylic painting. All skill levels welcome. Can be taken twice.',
     deadlineNote: null },
 
@@ -665,7 +664,7 @@ const COURSES = [
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], prereqNotes: 'Prior Upper School Visual Art class recommended.',
     unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Pinhole cameras and darkroom printing through DSLR/Adobe Lightroom. Can be taken twice (advanced track second time).',
     deadlineNote: null },
 
@@ -673,28 +672,28 @@ const COURSES = [
     semester: 'fall-spring', honors: false, ap: false, socialImpact: true,
     prereqs: [], prereqNotes: 'Prior Upper School Visual Art class recommended.',
     unlocks: ['arts-ceramics-adv', 'arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Pinching, coil-building, slab, and wheel throwing. Community engagement hunger project. Social Impact class. Can only be taken once.',
     deadlineNote: null },
 
   { id: 'arts-printmaking', name: 'Introduction to Printmaking', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Relief, monotype, and screen printing. Composition, mark-making, layering. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-music-prod', name: 'Music Production', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Logic Pro, recording techniques, music editing, and songwriting. Can be taken twice.',
     deadlineNote: null },
 
   { id: 'arts-studio-found', name: 'Studio Art Foundations', department: 'Arts', grades: [9, 10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['arts-studio-adv', 'arts-inquiry'],
-    tags: ['arts', 'arts-elective'],
+    tags: ['arts'],
     notes: 'Intro to elements of art and design in 2D and 3D. Good first arts course. Can only be taken once.',
     deadlineNote: null },
 
@@ -704,7 +703,7 @@ const COURSES = [
     prereqs: [],
     prereqNotes: 'Must have completed at least 3 arts courses (1.5 credits). Signed proposal and approval required. Space limited by mentor availability.',
     unlocks: [],
-    tags: ['arts', 'arts-elective', 'unique', 'deadline'],
+    tags: ['arts', 'unique', 'deadline'],
     notes: 'Individualized advanced project: college portfolio, specialized medium, or interdisciplinary inquiry.',
     deadlineNote: 'PROPOSAL DEADLINE: End of junior year for the following fall or spring. First-come, first-served.' },
 

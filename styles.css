@@ -555,6 +555,19 @@ html, body {
   font-style: italic;
 }
 
+/* Arts "recurring" chip — shown in grade columns after the current year */
+.arts-recurring-note {
+  font-size: 10px;
+  color: var(--color-text-hint);
+  font-style: italic;
+  text-align: center;
+  padding: 5px 4px 3px;
+  border-radius: 4px;
+  background: var(--color-surface-raised);
+  border: 1px dashed var(--color-border);
+  margin-bottom: 4px;
+}
+
 /* ── BADGES ────────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
