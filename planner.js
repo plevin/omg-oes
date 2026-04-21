@@ -4,6 +4,7 @@
 // ── STATE ─────────────────────────────────────────────────────────────────
 
 const state = {
+  currentGrade: 9,        // Student's current grade (9–12)
   mathLevel: 'geometry',
   language: 'spanish',
   langLevel: 2,
@@ -14,6 +15,22 @@ const state = {
     arts: false,
   },
   selectedCourseId: null,
+};
+
+// School year for the student's 9th-grade year (used to label columns)
+const BASE_SCHOOL_YEAR = 2026; // i.e. 2026–27
+
+function schoolYear(grade) {
+  const offset = grade - state.currentGrade;
+  const start = BASE_SCHOOL_YEAR + offset;
+  return `${start}–${String(start + 1).slice(-2)}`;
+}
+
+const PLAN_LABELS = {
+  9:  'Four-year plan',
+  10: 'Three-year plan',
+  11: 'Two-year plan',
+  12: 'Final year plan',
 };
 
 // ── DEPARTMENT ROW DEFINITIONS ────────────────────────────────────────────
@@ -47,11 +64,14 @@ const MATH_ORDER = {
 
 // Maps state.mathLevel to the course id of the student's current course
 const MATH_LEVEL_TO_COURSE = {
-  'algebra':  'math-algebra',
-  'geometry': 'math-geometry',
-  'advalg':   'math-advalg',
-  'advalg-h': 'math-advalg-proofs',
-  'precalc':  'math-precalc',
+  'algebra':   'math-algebra',
+  'geometry':  'math-geometry',
+  'advalg':    'math-advalg',
+  'advalg-h':  'math-advalg-proofs',
+  'precalc':   'math-precalc',
+  'precalc-h': 'math-precalc-proofs',
+  'calc-ab':   'math-calc-ab',
+  'calc-bc':   'math-calc-bc',
 };
 
 // Sequential order of math courses for "completed" detection
@@ -225,17 +245,18 @@ function displayGrade(course) {
     const currentCourseId = MATH_LEVEL_TO_COURSE[state.mathLevel];
     const currentOffset = MATH_GRADE_OFFSET[currentCourseId] ?? 1;
     const courseOffset = MATH_GRADE_OFFSET[course.id];
-    const rawGrade = 9 + (courseOffset - currentOffset);
+    // Anchor math sequence to the student's current grade (not hardcoded to 9)
+    const rawGrade = state.currentGrade + (courseOffset - currentOffset);
     const minGrade = Math.min(...course.grades);
     const maxGrade = Math.max(...course.grades);
     return Math.min(Math.max(rawGrade, minGrade), maxGrade);
   }
 
-  // World Languages: anchor the sequence to the student's current level (state.langLevel).
-  // A Level-2 student sees their current course in Grade 9 and subsequent levels in Gr 10/11/12.
+  // World Languages: anchor the sequence to the student's current level and current grade.
   if (course.department === 'World Languages' && LANG_LEVEL_FOR_COURSE[course.id] !== undefined) {
     const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
-    const rawGrade = 9 + (courseLevel - state.langLevel);
+    // Anchor language sequence to the student's current grade (not hardcoded to 9)
+    const rawGrade = state.currentGrade + (courseLevel - state.langLevel);
     const minGrade = Math.min(...course.grades);
     const maxGrade = Math.max(...course.grades);
     return Math.min(Math.max(rawGrade, minGrade), maxGrade);
@@ -276,6 +297,14 @@ function renderGrid() {
   const gridBody = document.getElementById('grid-body');
   if (!gridBody) return;
 
+  // Grades to display: student's current grade through Grade 12
+  const grades = [];
+  for (let g = state.currentGrade; g <= 12; g++) grades.push(g);
+
+  // Sync column count to CSS so header and rows stay aligned
+  const numCols = grades.length;
+  document.querySelector('.grid-container')?.style.setProperty('--grid-cols', numCols);
+
   gridBody.innerHTML = '';
 
   DEPT_ROWS.forEach(deptDef => {
@@ -291,8 +320,8 @@ function renderGrid() {
     label.textContent = deptDef.label;
     row.appendChild(label);
 
-    // Four grade cells
-    [9, 10, 11, 12].forEach(grade => {
+    // One cell per remaining grade
+    grades.forEach(grade => {
       const cell = document.createElement('div');
       cell.className = 'cell';
 
@@ -457,7 +486,8 @@ function computePathRisk(path) {
 }
 
 function getStepStatus(step, path) {
-  if (step.grade === 9) return 'current';
+  if (step.grade < state.currentGrade) return 'completed';
+  if (step.grade === state.currentGrade) return 'current';
 
   if (step.courseId) {
     const course = getCourseById(step.courseId);
@@ -465,8 +495,8 @@ function getStepStatus(step, path) {
     if (course && isCompleted(course)) return 'completed';
   }
 
-  // CS path: at-risk if CS track not enabled and grade is future
-  if (path.id === 'path-ml' && !state.interests.cs && step.grade > 9) return 'at-risk';
+  // CS path: at-risk if CS track not enabled and grade is in the future
+  if (path.id === 'path-ml' && !state.interests.cs && step.grade > state.currentGrade) return 'at-risk';
 
   return 'future';
 }
@@ -589,6 +619,33 @@ function switchView(viewName) {
   });
 }
 
+// ── GRID HEADER & PLAN LABEL ─────────────────────────────────────────────────
+
+function renderGridHeader() {
+  const header = document.getElementById('grid-header');
+  if (!header) return;
+
+  const grades = [];
+  for (let g = state.currentGrade; g <= 12; g++) grades.push(g);
+
+  // Sync CSS column count
+  document.querySelector('.grid-container')?.style.setProperty('--grid-cols', grades.length);
+
+  // Rebuild header: corner + one label per grade
+  header.innerHTML = '<div class="grid-corner"></div>';
+  grades.forEach(g => {
+    const div = document.createElement('div');
+    div.className = 'grade-label';
+    div.innerHTML = `Grade ${g} <span class="grade-year">${schoolYear(g)}</span>`;
+    header.appendChild(div);
+  });
+}
+
+function updatePlanLabel() {
+  const btn = document.getElementById('tab-grid');
+  if (btn) btn.textContent = PLAN_LABELS[state.currentGrade] ?? 'Plan';
+}
+
 // ── SIDEBAR TOGGLE ──────────────────────────────────────────────────────────
 
 function toggleSidebar() {
@@ -598,6 +655,14 @@ function toggleSidebar() {
 // ── PROFILE CHANGE HANDLERS ─────────────────────────────────────────────────
 
 function bindProfileControls() {
+  document.getElementById('current-grade')?.addEventListener('change', e => {
+    state.currentGrade = parseInt(e.target.value);
+    renderGridHeader();
+    updatePlanLabel();
+    renderGrid();
+    renderPaths();
+  });
+
   document.getElementById('math-level')?.addEventListener('change', e => {
     state.mathLevel = e.target.value;
     updateMathHint();
@@ -642,11 +707,14 @@ function bindProfileControls() {
 
 function updateMathHint() {
   const hints = {
-    'algebra': 'Start here → Geometry → Advanced Algebra path',
-    'geometry': 'On track. Push for Advanced Algebra with Proofs (H) in 10th for best path.',
-    'advalg': 'Standard path to AP Calc AB senior year.',
-    'advalg-h': 'Honors path open → Precalc with Proofs → AP Calc BC + Linear Algebra + Multivariable',
-    'precalc': 'AP Calc AB senior year is likely.',
+    'algebra':   'Foundation → Geometry → Advanced Algebra. Reach AP Calc AB by senior year.',
+    'geometry':  'Push for Advanced Algebra with Proofs (H) next year to unlock the full honors path.',
+    'advalg':    'Standard track → Precalculus → AP Calc AB.',
+    'advalg-h':  'Honors track open → Precalc with Proofs → AP Calc BC + Linear Algebra + Multivariable.',
+    'precalc':   'AP Calc AB next year. Strong foundation for science and CS.',
+    'precalc-h': 'Honors track → AP Calc BC, then Linear Algebra (H) + Multivariable Calc (H).',
+    'calc-ab':   'AP Calc AB → BC next year opens Linear Algebra (H) + Multivariable Calc (H).',
+    'calc-bc':   'Top math track. Linear Algebra (H) + Multivariable Calc (H) available this year.',
   };
   const el = document.getElementById('math-hint');
   if (el) el.textContent = hints[state.mathLevel] || '';
@@ -768,6 +836,8 @@ function getCourseById(id) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 function init() {
+  renderGridHeader();
+  updatePlanLabel();
   renderGrid();
   renderPaths();
   renderDeadlines();

@@ -353,12 +353,13 @@ html, body {
 
 /* ── FOUR-YEAR GRID ────────────────────────────────────────────────────── */
 .grid-container {
-  min-width: 760px;
+  min-width: 600px;
+  --grid-cols: 4;  /* updated by JS when grade changes */
 }
 
 .grid-header {
   display: grid;
-  grid-template-columns: 120px repeat(4, 1fr);
+  grid-template-columns: 120px repeat(var(--grid-cols), 1fr);
   gap: 8px;
   margin-bottom: 8px;
   position: sticky;
@@ -399,7 +400,7 @@ html, body {
 
 .grid-row {
   display: grid;
-  grid-template-columns: 120px repeat(4, 1fr);
+  grid-template-columns: 120px repeat(var(--grid-cols), 1fr);
   gap: 8px;
   align-items: start;
   min-height: 60px;

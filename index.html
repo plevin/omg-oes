@@ -25,6 +25,16 @@
         <h3 class="section-heading">Student profile</h3>
 
         <div class="field-group">
+          <label class="field-label" for="current-grade">Current grade</label>
+          <select id="current-grade" class="field-select">
+            <option value="9" selected>9th grade — Freshman</option>
+            <option value="10">10th grade — Sophomore</option>
+            <option value="11">11th grade — Junior</option>
+            <option value="12">12th grade — Senior</option>
+          </select>
+        </div>
+
+        <div class="field-group">
           <label class="field-label" for="math-level">Current math placement</label>
           <select id="math-level" class="field-select">
             <option value="algebra">Algebra</option>
@@ -32,6 +42,9 @@
             <option value="advalg">Advanced Algebra</option>
             <option value="advalg-h">Adv Algebra with Proofs (H)</option>
             <option value="precalc">Precalculus</option>
+            <option value="precalc-h">Precalculus with Proofs (H)</option>
+            <option value="calc-ab">AP Calculus AB</option>
+            <option value="calc-bc">AP Calculus BC</option>
           </select>
           <div class="field-hint" id="math-hint">On track for AP Calc BC path if honors-eligible</div>
         </div>
@@ -52,6 +65,7 @@
             <option value="2" selected>Level 2</option>
             <option value="3">Level 3</option>
             <option value="4">Level 4</option>
+            <option value="5">Level 5 / AP</option>
           </select>
           <div class="field-hint" id="lang-hint">Complete 2 more years to reach AP or HLC</div>
         </div>
@@ -128,12 +142,9 @@
       <!-- VIEW: FOUR-YEAR GRID -->
       <div class="view" id="view-grid">
         <div class="grid-container">
-          <div class="grid-header">
+          <div class="grid-header" id="grid-header">
             <div class="grid-corner"></div>
-            <div class="grade-label">Grade 9 <span class="grade-year">2026–27</span></div>
-            <div class="grade-label">Grade 10 <span class="grade-year">2027–28</span></div>
-            <div class="grade-label">Grade 11 <span class="grade-year">2028–29</span></div>
-            <div class="grade-label">Grade 12 <span class="grade-year">2029–30</span></div>
+            <!-- Grade labels injected by renderGridHeader() in planner.js -->
           </div>
           <div class="grid-body" id="grid-body">
             <!-- Rows injected by planner.js -->
