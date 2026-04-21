@@ -292,7 +292,7 @@ function isRecommended(course) {
 // plan: courses the student has explicitly added to their schedule
 // lockedCourses: auto-seeded from profile; cannot be removed
 
-const plan = new Set();
+const plan = new Map(); // Map<courseId, grade> — grade is the year the student plans to take it
 const lockedCourses = new Set();
 
 // Maps language + level to the canonical current course ID
@@ -349,21 +349,24 @@ function canPlan(courseId) {
 
 function togglePlan(courseId) {
   if (lockedCourses.has(courseId)) return;
-  if (plan.has(courseId)) plan.delete(courseId);
-  else plan.add(courseId);
+  plan.delete(courseId); // remove only; adding is done via buildAddSlot with grade
   savePlan();
   renderPlanGrid();
 }
 
 function savePlan() {
-  try { localStorage.setItem('oes-plan-v1', JSON.stringify([...plan])); } catch(e) {}
+  try { localStorage.setItem('oes-plan-v1', JSON.stringify([...plan.entries()])); } catch(e) {}
 }
 
 function loadPlan() {
   try {
     const saved = JSON.parse(localStorage.getItem('oes-plan-v1') || '[]');
     plan.clear();
-    saved.forEach(id => plan.add(id));
+    // Support both new format [[id, grade], ...] and legacy [id, ...]
+    saved.forEach(entry => {
+      if (Array.isArray(entry)) plan.set(entry[0], entry[1]);
+      // else: legacy string IDs — skip (grade unknown, will need re-planning)
+    });
   } catch(e) { plan.clear(); }
 }
 
@@ -379,12 +382,18 @@ function refreshPlanForProfileChange() {
 // 1 yearlong = 1 slot; 1 semester course = 0.5 slot; max 6 (7th requires approval)
 function computeCapacity(grade) {
   let slots = 0;
-  for (const id of [...lockedCourses, ...plan]) {
+  // Locked courses — use displayGrade to determine which year they count
+  for (const id of lockedCourses) {
     const c = getCourseById(id);
     if (!c || c.department === 'Special') continue;
-    // Winterim is already excluded via Special dept; health/other fixed counts
-    const cGrade = c.id === 'winterim' ? null : displayGrade(c);
-    if (cGrade !== grade) continue;
+    if (displayGrade(c) !== grade) continue;
+    slots += c.semester === 'yearlong' ? 1 : 0.5;
+  }
+  // Planned courses — use the recorded grade from plan Map
+  for (const [id, planGrade] of plan) {
+    const c = getCourseById(id);
+    if (!c || c.department === 'Special') continue;
+    if (planGrade !== grade) continue;
     slots += c.semester === 'yearlong' ? 1 : 0.5;
   }
   return slots;
@@ -464,15 +473,11 @@ function buildPlanCell(dept, grade, deptCourses) {
       return displayGrade(c) === grade;
     });
 
-  // Manually planned courses in this dept+grade
-  const plannedHere = [...plan]
-    .map(id => getCourseById(id))
-    .filter(c => {
-      if (!c || c.department !== dept) return false;
-      // Arts: allow any grade the course is available in
-      if (dept === 'Arts') return c.grades.includes(grade) && displayGrade(c) <= grade;
-      return displayGrade(c) === grade;
-    });
+  // Manually planned courses in this dept+grade — use recorded grade from Map
+  const plannedHere = [...plan.entries()]
+    .filter(([id, planGrade]) => planGrade === grade)
+    .map(([id]) => getCourseById(id))
+    .filter(c => c && c.department === dept);
 
   lockedHere.forEach(c  => cell.appendChild(buildPlanCard(c, 'locked-in')));
   plannedHere.forEach(c => cell.appendChild(buildPlanCard(c, 'planned')));
@@ -526,8 +531,8 @@ function buildAddSlot(dept, grade, deptCourses) {
   const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
     if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
     if (c.id === 'winterim') return false;
-    // Arts: available any year the course lists; show from first-eligible grade onward
-    if (dept === 'Arts') return c.grades.includes(grade) && displayGrade(c) <= grade;
+    // Arts courses are available across many grades — show ones listed for this grade
+    if (dept === 'Arts') return c.grades.includes(grade);
     return displayGrade(c) === grade;
   });
 
@@ -552,7 +557,7 @@ function buildAddSlot(dept, grade, deptCourses) {
     item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel}${warn ? ' ⚠ prereq' : ''}</span>`;
     item.addEventListener('click', e => {
       e.stopPropagation();
-      plan.add(c.id);
+      plan.set(c.id, grade); // record which year the student is planning this course
       savePlan();
       picker.classList.add('hidden');
       renderPlanGrid();
@@ -586,7 +591,7 @@ function renderWhatsLeft() {
 
   // Credit totals by department (locked + planned)
   const credits = {};
-  for (const id of [...lockedCourses, ...plan]) {
+  for (const id of [...lockedCourses, ...plan.keys()]) {
     const c = getCourseById(id);
     if (!c) continue;
     const dept = c.department;
