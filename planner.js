@@ -85,6 +85,27 @@ const MATH_GRADE_OFFSET = {
   'math-multivariable': 4,
 };
 
+// Language level for each course in the world language sequence.
+// Value = the level at which a student is taking this course.
+// Used to anchor the language grid to the student's current level (state.langLevel),
+// so Spanish II shows in grade 9 for a Level-2 student, etc.
+const LANG_LEVEL_FOR_COURSE = {
+  'lang-spanish1': 1,
+  'lang-spanish2': 2,
+  'lang-spanish3': 3,
+  'lang-spanish4': 4,
+  'lang-ap-spanish': 5,
+  'lang-hlc': 5,
+  'lang-french2': 2,
+  'lang-french3': 3,
+  'lang-french4': 4,
+  'lang-ap-french': 5,
+  'lang-chinese2': 2,
+  'lang-chinese3': 3,
+  'lang-chinese4': 4,
+  'lang-chinese5': 5,
+};
+
 // ── STATUS COMPUTATION ─────────────────────────────────────────────────────
 // Determines the display status of a course given current state
 
@@ -109,12 +130,20 @@ function getCourseStatus(course) {
 }
 
 function isCompleted(course) {
-  if (course.department !== 'Math') return false;
-  const currentCourseId = MATH_LEVEL_TO_COURSE[state.mathLevel];
-  if (!currentCourseId) return false;
-  const currentOrder = MATH_COURSE_ORDER[currentCourseId] ?? -1;
-  const courseOrder = MATH_COURSE_ORDER[course.id] ?? 999;
-  return courseOrder < currentOrder;
+  if (course.department === 'Math') {
+    const currentCourseId = MATH_LEVEL_TO_COURSE[state.mathLevel];
+    if (!currentCourseId) return false;
+    const currentOrder = MATH_COURSE_ORDER[currentCourseId] ?? -1;
+    const courseOrder = MATH_COURSE_ORDER[course.id] ?? 999;
+    return courseOrder < currentOrder;
+  }
+  if (course.department === 'World Languages') {
+    const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
+    if (courseLevel === undefined) return false;
+    // Course is completed if student's current level is strictly beyond it
+    return state.langLevel > courseLevel;
+  }
+  return false;
 }
 
 // Returns true if this course belongs to the chosen language
@@ -196,6 +225,16 @@ function displayGrade(course) {
     const currentOffset = MATH_GRADE_OFFSET[currentCourseId] ?? 1;
     const courseOffset = MATH_GRADE_OFFSET[course.id];
     const rawGrade = 9 + (courseOffset - currentOffset);
+    const minGrade = Math.min(...course.grades);
+    const maxGrade = Math.max(...course.grades);
+    return Math.min(Math.max(rawGrade, minGrade), maxGrade);
+  }
+
+  // World Languages: anchor the sequence to the student's current level (state.langLevel).
+  // A Level-2 student sees their current course in Grade 9 and subsequent levels in Gr 10/11/12.
+  if (course.department === 'World Languages' && LANG_LEVEL_FOR_COURSE[course.id] !== undefined) {
+    const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
+    const rawGrade = 9 + (courseLevel - state.langLevel);
     const minGrade = Math.min(...course.grades);
     const maxGrade = Math.max(...course.grades);
     return Math.min(Math.max(rawGrade, minGrade), maxGrade);
@@ -561,6 +600,7 @@ function bindProfileControls() {
 
   document.getElementById('language')?.addEventListener('change', e => {
     state.language = e.target.value;
+    updateLangHint();
     renderGrid();
   });
 
@@ -609,11 +649,48 @@ function updateLangHint() {
   const yearsToAP = Math.max(0, 4 - state.langLevel);
   const el = document.getElementById('lang-hint');
   if (!el) return;
+  const apLabel = state.language === 'chinese' ? 'Chinese V (H)' :
+                  state.language === 'french'  ? 'AP French' : 'AP Spanish or HLC/HCC';
   if (state.langLevel >= 4) {
-    el.textContent = 'AP or HLC/HCC accessible in next year!';
+    el.textContent = `${apLabel} accessible next year!`;
+  } else if (yearsToAP === 0) {
+    el.textContent = `${apLabel} accessible next year!`;
   } else {
-    el.textContent = `${yearsToAP} more year${yearsToAP !== 1 ? 's' : ''} to reach AP or HLC`;
+    el.textContent = `${yearsToAP} more year${yearsToAP !== 1 ? 's' : ''} to reach ${apLabel}`;
   }
+}
+
+// ── GRADUATION REQUIREMENTS PANEL ────────────────────────────────────────────
+
+function renderRequirements() {
+  const el = document.getElementById('req-list');
+  if (!el) return;
+
+  const reqs = [
+    // Always satisfied by the required 9-12 sequence
+    { label: 'English',         detail: '4 credits',            status: 'on-track' },
+    { label: 'History',         detail: '2.5 credits',          status: 'on-track' },
+    { label: 'Math',            detail: '3 credits min.',       status: 'on-track' },
+    { label: 'Science',         detail: '3 credits',            status: 'on-track' },
+    { label: 'Health',          detail: '1 credit · Grade 9',   status: 'on-track' },
+    { label: 'Languages',       detail: '2 consecutive years',  status: 'on-track' },
+    { label: 'Winterim',        detail: 'Every year',           status: 'on-track' },
+    // Require active planning
+    { label: 'Religion & Phil', detail: '2 semesters · plan timing',    status: 'plan' },
+    { label: 'Arts',            detail: '1.5 credits · 3 courses',      status: 'plan' },
+    { label: 'Community Eng',   detail: '2 projects · 80 hrs total',    status: 'plan' },
+    { label: 'Extracurricular', detail: '2/yr (9-10) · 1/yr (11-12)',   status: 'plan' },
+  ];
+
+  el.innerHTML = reqs.map(r => `
+    <div class="req-item req-${r.status}">
+      <span class="req-icon">${r.status === 'on-track' ? '✓' : '·'}</span>
+      <div class="req-text">
+        <span class="req-label">${r.label}</span>
+        <span class="req-detail">${r.detail}</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -628,6 +705,7 @@ function init() {
   renderGrid();
   renderPaths();
   renderDeadlines();
+  renderRequirements();
   bindProfileControls();
   updateMathHint();
   updateLangHint();

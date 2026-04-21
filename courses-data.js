@@ -144,6 +144,15 @@ const COURSES = [
     tags: [],
     notes: 'Journalism, music, advertising through lens of ethics and business.', deadlineNote: null },
 
+  { id: 'hist-debate', name: 'Advanced Debate', department: 'History', grades: [11, 12],
+    semester: 'fall', honors: false, ap: false, socialImpact: false,
+    prereqs: [],
+    prereqNotes: 'Must have previously participated in Speech and Debate activity or extracurricular, or have instructor approval',
+    unlocks: [],
+    tags: ['decision'],
+    notes: 'Lincoln-Douglas, Public Forum, Policy, and World Schools formats. Requires attending four interscholastic competitions. Includes independent study project on a critical/philosophical debate topic.',
+    deadlineNote: null },
+
   // ── MATHEMATICS ──────────────────────────────────────────────────────────
 
   { id: 'math-algebra', name: 'Algebra', department: 'Math', grades: [9, 10],
@@ -273,11 +282,13 @@ const COURSES = [
 
   // ── SCIENCE ───────────────────────────────────────────────────────────────
 
-  { id: 'sci-physics', name: 'Physics (Foundation)', department: 'Science', grades: [9],
+  { id: 'sci-physics', name: 'Physics Foundation', department: 'Science', grades: [9],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['sci-chemistry', 'sci-chem-h'],
     tags: ['required'],
-    notes: '1D or 2D physics depending on placement. SIP required.', deadlineNote: null },
+    prereqNotes: 'Placement by department based on transcript, teacher rec, and STEM diagnostic. Two tracks: One-dimensional (algebraic) or Two-dimensional (trig + algebraic).',
+    notes: 'Two placement tracks: One-dimensional Physics (algebraic tools) or Two-dimensional Physics (adds trigonometry and systems of equations). Both are yearlong, both require the Science Inquiry Project (SIP).',
+    deadlineNote: null },
 
   { id: 'sci-chemistry', name: 'Chemistry', department: 'Science', grades: [10],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
@@ -415,7 +426,7 @@ const COURSES = [
   { id: 'rp-worldrel', name: 'World Religions', department: 'Religion & Philosophy', grades: [10, 11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [],
-    unlocks: ['rp-buddhism', 'rp-love', 'rp-encounters', 'rp-ethics', 'rp-hebrew', 'rp-debate-adv'],
+    unlocks: ['rp-buddhism', 'rp-love', 'rp-encounters', 'rp-ethics', 'rp-hebrew'],
     tags: ['required'],
     notes: 'MUST complete before any other R&P course. Cannot take concurrently. Must complete by fall of senior year at latest.',
     deadlineNote: 'Must complete World Religions by fall of senior year to have time for the required second R&P course.' },
@@ -449,11 +460,18 @@ const COURSES = [
 
   // ── WORLD LANGUAGES ──────────────────────────────────────────────────────
 
+  { id: 'lang-spanish1', name: 'Spanish I', department: 'World Languages', grades: [9],
+    semester: 'yearlong', honors: false, ap: false, socialImpact: false,
+    prereqs: [], unlocks: ['lang-spanish2'],
+    tags: ['required', 'language'],
+    notes: 'Entry point for students new to Spanish. No placement test required. Year 1 of graduation requirement.',
+    deadlineNote: null },
+
   { id: 'lang-spanish2', name: 'Spanish II', department: 'World Languages', grades: [9, 10],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
-    prereqs: [], unlocks: ['lang-spanish3'],
+    prereqs: ['lang-spanish1'], unlocks: ['lang-spanish3'],
     tags: ['required', 'language'],
-    notes: 'Year 1 of graduation requirement if starting here.', deadlineNote: null },
+    notes: 'Year 1 of graduation requirement if starting here. Most OES students enter at Level 2.', deadlineNote: null },
 
   { id: 'lang-spanish3', name: 'Spanish III', department: 'World Languages', grades: [10, 11],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,

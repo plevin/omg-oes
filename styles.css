@@ -871,6 +871,77 @@ html, body {
 .elective-item:last-child { border-bottom: none; }
 .elective-item:hover { background: var(--color-surface); color: var(--color-text); }
 
+/* ── GRADUATION REQUIREMENTS PANEL ────────────────────────────────────── */
+.req-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+
+.req-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.req-item.req-on-track { background: var(--color-completed-bg); }
+.req-item.req-plan     { background: #fffbf0; }
+
+.req-icon {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.5;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.req-item.req-on-track .req-icon { color: var(--color-completed-text); }
+.req-item.req-plan     .req-icon { color: var(--color-decision-text); }
+
+.req-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.req-label {
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.req-detail {
+  color: var(--color-text-hint);
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.ap-limits {
+  border-top: 1px solid var(--color-border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.ap-limits-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-hint);
+  margin-bottom: 3px;
+}
+
+.ap-limits-detail {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
 /* ── PRINT STYLES ──────────────────────────────────────────────────────── */
 @media print {
   .sidebar, .top-bar, .detail-panel { display: none !important; }
