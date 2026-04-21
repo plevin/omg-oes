@@ -47,10 +47,12 @@
   --color-si-text: #27500a;
 
   /* Interest ring colors — match toggle tracks and card rings */
-  --ring-stem: #4f46e5;   /* indigo  — Deep STEM   */
-  --ring-cs:   #7c3aed;   /* violet  — CS track     */
-  --ring-lang: #0891b2;   /* cyan    — Language     */
-  --ring-arts: #d97706;   /* amber   — Arts         */
+  --ring-stem:       #4f46e5;   /* indigo  — Deep STEM      */
+  --ring-cs:         #7c3aed;   /* violet  — CS track       */
+  --ring-english:    #e11d48;   /* rose    — English        */
+  --ring-humanities: #0d9488;   /* teal    — Social Studies */
+  --ring-lang:       #0891b2;   /* cyan    — Language       */
+  --ring-arts:       #d97706;   /* amber   — Arts           */
 
   --sidebar-width: 260px;
   --detail-width: 320px;
@@ -574,10 +576,12 @@ html, body {
 /* ── INTEREST HIGHLIGHTING ─────────────────────────────────────────────── */
 
 /* Color ring on matching cards — sits on top of the existing status color */
-.course-card[data-ring="stem"] { box-shadow: 0 0 0 2.5px var(--ring-stem), 0 2px 6px rgba(0,0,0,0.08); }
-.course-card[data-ring="cs"]   { box-shadow: 0 0 0 2.5px var(--ring-cs),   0 2px 6px rgba(0,0,0,0.08); }
-.course-card[data-ring="lang"] { box-shadow: 0 0 0 2.5px var(--ring-lang), 0 2px 6px rgba(0,0,0,0.08); }
-.course-card[data-ring="arts"] { box-shadow: 0 0 0 2.5px var(--ring-arts), 0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="stem"]       { box-shadow: 0 0 0 2.5px var(--ring-stem),       0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="cs"]         { box-shadow: 0 0 0 2.5px var(--ring-cs),         0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="english"]    { box-shadow: 0 0 0 2.5px var(--ring-english),    0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="humanities"] { box-shadow: 0 0 0 2.5px var(--ring-humanities), 0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="lang"]       { box-shadow: 0 0 0 2.5px var(--ring-lang),       0 2px 6px rgba(0,0,0,0.08); }
+.course-card[data-ring="arts"]       { box-shadow: 0 0 0 2.5px var(--ring-arts),       0 2px 6px rgba(0,0,0,0.08); }
 
 /* When any interest is active, dim optional courses that don't match */
 .grid-body.interest-active .course-card:not(.interest-match):not(.status-required):not(.status-completed):not(.status-locked) {
@@ -613,10 +617,12 @@ html, body {
 /* ── COLOR-CODED INTEREST TOGGLES ──────────────────────────────────────── */
 /* Each toggle track matches the ring color for that interest category */
 
-#toggle-stem:checked ~ .toggle-track { background: var(--ring-stem); }
-#toggle-cs:checked   ~ .toggle-track { background: var(--ring-cs);   }
-#toggle-lang:checked ~ .toggle-track { background: var(--ring-lang); }
-#toggle-arts:checked ~ .toggle-track { background: var(--ring-arts); }
+#toggle-stem:checked       ~ .toggle-track { background: var(--ring-stem);       }
+#toggle-cs:checked         ~ .toggle-track { background: var(--ring-cs);         }
+#toggle-english:checked    ~ .toggle-track { background: var(--ring-english);    }
+#toggle-humanities:checked ~ .toggle-track { background: var(--ring-humanities); }
+#toggle-lang:checked       ~ .toggle-track { background: var(--ring-lang);       }
+#toggle-arts:checked       ~ .toggle-track { background: var(--ring-arts);       }
 
 /* ── CRITICAL PATHS VIEW ───────────────────────────────────────────────── */
 .paths-container {

@@ -10,10 +10,12 @@ const state = {
   language: 'spanish',
   langLevel: 2,
   interests: {
-    stem: true,
-    cs: false,
-    lang: true,
-    arts: false,
+    stem:       true,
+    cs:         false,
+    english:    false,
+    humanities: false,
+    lang:       true,
+    arts:       false,
   },
   selectedCourseId: null,
 };
@@ -161,11 +163,26 @@ const LANG_LEVEL_FOR_COURSE = {
   'lang-chinese5': 5,
 };
 
+// ── EFFECTIVE TAGS ────────────────────────────────────────────────────────
+// Returns a course's stored tags augmented with implicit department-based
+// interest tags. This avoids having to manually add 'english' or 'humanities'
+// to every individual course entry in the data file.
+
+function getEffectiveTags(course) {
+  const tags = [...(course.tags || [])];
+  // All English-department courses are 'english' interest
+  if (course.department === 'English') tags.push('english');
+  // History and Religion & Philosophy are 'humanities' interest
+  if (course.department === 'History' ||
+      course.department === 'Religion & Philosophy') tags.push('humanities');
+  return tags;
+}
+
 // ── STATUS COMPUTATION ─────────────────────────────────────────────────────
 // Determines the display status of a course given current state
 
 function getCourseStatus(course) {
-  const tags = course.tags || [];
+  const tags = getEffectiveTags(course);
 
   // Completed math courses shown distinctly
   if (isCompleted(course)) return 'completed';
@@ -252,12 +269,14 @@ function isLockedOut(course) {
 }
 
 function isRecommended(course) {
-  const tags = course.tags || [];
+  const tags = getEffectiveTags(course);
   const id = course.id;
 
-  if (state.interests.stem && tags.includes('stem')) return true;
-  if (state.interests.cs && tags.includes('cs')) return true;
-  if (state.interests.lang && tags.includes('language')) return true;
+  if (state.interests.stem       && tags.includes('stem'))       return true;
+  if (state.interests.cs         && tags.includes('cs'))         return true;
+  if (state.interests.english    && tags.includes('english'))    return true;
+  if (state.interests.humanities && tags.includes('humanities')) return true;
+  if (state.interests.lang       && tags.includes('language'))   return true;
 
   // Specific recommendations for this student
   if (state.interests.stem) {
@@ -463,7 +482,7 @@ function buildCourseCard(course) {
   const card = document.createElement('div');
   card.className = `course-card status-${status}`;
   card.dataset.courseId = course.id;
-  card.dataset.tags = (course.tags || []).join(' ');
+  card.dataset.tags = getEffectiveTags(course).join(' ');
   card.dataset.dept = course.department;
 
   if (status !== 'locked' && status !== 'completed') {
@@ -804,6 +823,16 @@ function bindProfileControls() {
     renderGrid();
   });
 
+  document.getElementById('toggle-english')?.addEventListener('change', e => {
+    state.interests.english = e.target.checked;
+    renderGrid();
+  });
+
+  document.getElementById('toggle-humanities')?.addEventListener('change', e => {
+    state.interests.humanities = e.target.checked;
+    renderGrid();
+  });
+
   document.getElementById('toggle-cs')?.addEventListener('change', e => {
     state.interests.cs = e.target.checked;
     renderGrid();
@@ -905,18 +934,21 @@ function updateInterestHighlights() {
   const gridBody = document.getElementById('grid-body');
   if (!gridBody) return;
 
-  const anyActive = state.interests.stem || state.interests.cs || state.interests.lang || state.interests.arts;
+  const anyActive = state.interests.stem || state.interests.cs || state.interests.english ||
+                    state.interests.humanities || state.interests.lang || state.interests.arts;
   gridBody.classList.toggle('interest-active', anyActive);
 
   gridBody.querySelectorAll('.course-card').forEach(card => {
     const tags = (card.dataset.tags || '').split(' ');
 
-    // Determine ring color by priority: cs > stem > lang > arts
+    // Determine ring color by priority: cs > stem > english > humanities > lang > arts
     let ring = '';
-    if      (state.interests.cs   && tags.includes('cs'))       ring = 'cs';
-    else if (state.interests.stem && tags.includes('stem'))     ring = 'stem';
-    else if (state.interests.lang && tags.includes('language')) ring = 'lang';
-    else if (state.interests.arts && tags.includes('arts'))     ring = 'arts';
+    if      (state.interests.cs         && tags.includes('cs'))         ring = 'cs';
+    else if (state.interests.stem       && tags.includes('stem'))       ring = 'stem';
+    else if (state.interests.english    && tags.includes('english'))    ring = 'english';
+    else if (state.interests.humanities && tags.includes('humanities')) ring = 'humanities';
+    else if (state.interests.lang       && tags.includes('language'))   ring = 'lang';
+    else if (state.interests.arts       && tags.includes('arts'))       ring = 'arts';
 
     card.classList.toggle('interest-match', !!ring);
 
