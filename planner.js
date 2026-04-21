@@ -6,7 +6,7 @@
 const state = {
   currentGrade: 9,        // Student's current grade (9–12)
   mathLevel: 'geometry',
-  scienceLevel: 'physics', // Current science placement
+  scienceLevel: 'physics-1d', // Current science placement
   language: 'spanish',
   langLevel: 2,
   interests: {
@@ -112,28 +112,32 @@ const MATH_GRADE_OFFSET = {
 // Years-after-Physics offset for the core science sequence courses.
 // Only the required-sequence courses are here; electives (Engineering, Marine, etc.)
 // continue to use the default prereq-based displayGrade logic.
+// Both Physics tracks (1D and 2D) are at offset 0 since they're both grade-9 placements.
 const SCIENCE_GRADE_OFFSET = {
-  'sci-physics':   0,
-  'sci-chemistry': 1,
-  'sci-chem-h':    1,
-  'sci-biology':   2,
-  'sci-bio-h':     2,
+  'sci-physics-1d': 0,
+  'sci-physics-2d': 0,
+  'sci-chemistry':  1,
+  'sci-chem-h':     1,
+  'sci-biology':    2,
+  'sci-bio-h':      2,
 };
 
 // Maps state.scienceLevel to a sequence offset (parallel to SCIENCE_GRADE_OFFSET)
 const SCIENCE_LEVEL_OFFSET = {
-  'physics':   0,
-  'chemistry': 1,
-  'biology':   2,
-  'advanced':  3,
+  'physics-1d': 0,
+  'physics-2d': 0,
+  'chemistry':  1,
+  'biology':    2,
+  'advanced':   3,
 };
 
 // Maps state.scienceLevel to the course ids that represent the student's current science course
 const SCIENCE_LEVEL_TO_COURSES = {
-  'physics':   ['sci-physics'],
-  'chemistry': ['sci-chemistry', 'sci-chem-h'],
-  'biology':   ['sci-biology', 'sci-bio-h'],
-  'advanced':  [],
+  'physics-1d': ['sci-physics-1d'],
+  'physics-2d': ['sci-physics-2d'],
+  'chemistry':  ['sci-chemistry', 'sci-chem-h'],
+  'biology':    ['sci-biology', 'sci-bio-h'],
+  'advanced':   [],
 };
 
 // Language level for each course in the world language sequence.
@@ -383,12 +387,52 @@ function renderGrid() {
         cell.innerHTML = '<div class="empty-cell"></div>';
       } else {
         const electives = gradeCourses.filter(c => c.tags.includes('senior-elective'));
-        const regular = gradeCourses.filter(c => !c.tags.includes('senior-elective'));
+        const regular   = gradeCourses.filter(c => !c.tags.includes('senior-elective'));
 
-        regular.forEach(course => cell.appendChild(buildCourseCard(course)));
+        // ── 1. Yearlong courses (no semester label — they're the required backbone)
+        regular.filter(c => c.semester === 'yearlong')
+               .forEach(c => cell.appendChild(buildCourseCard(c)));
 
+        // ── 2. Semester courses: fall half | spring half
+        const fallReg   = regular.filter(c => c.semester === 'fall' || c.semester === 'fall-spring');
+        const springReg = regular.filter(c => c.semester === 'spring');
+
+        if (fallReg.length > 0 || springReg.length > 0) {
+          const semRow = document.createElement('div');
+          semRow.className = 'cell-semesters';
+          if (fallReg.length > 0) {
+            const half = makeSemHalf('Fall');
+            fallReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            semRow.appendChild(half);
+          }
+          if (springReg.length > 0) {
+            const half = makeSemHalf('Spring');
+            springReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            semRow.appendChild(half);
+          }
+          cell.appendChild(semRow);
+        }
+
+        // ── 3. Senior electives split into fall and spring groups
         if (electives.length > 0) {
-          cell.appendChild(buildElectiveGroup(electives));
+          const fallEl   = electives.filter(c => c.semester !== 'spring');
+          const springEl = electives.filter(c => c.semester === 'spring');
+
+          if (fallEl.length > 0 || springEl.length > 0) {
+            const semRow = document.createElement('div');
+            semRow.className = 'cell-semesters';
+            if (fallEl.length > 0) {
+              const half = makeSemHalf('Fall');
+              half.appendChild(buildElectiveGroup(fallEl, { chooseN: 1 }));
+              semRow.appendChild(half);
+            }
+            if (springEl.length > 0) {
+              const half = makeSemHalf('Spring');
+              half.appendChild(buildElectiveGroup(springEl, { chooseN: 1 }));
+              semRow.appendChild(half);
+            }
+            cell.appendChild(semRow);
+          }
         }
       }
 
@@ -401,6 +445,17 @@ function renderGrid() {
   // Apply dynamic overlays after all cards are in the DOM
   markCurrentCourses();
   updateInterestHighlights();
+}
+
+// Creates a half-column (fall or spring) with a header label.
+function makeSemHalf(label) {
+  const div = document.createElement('div');
+  div.className = 'cell-half';
+  const lbl = document.createElement('div');
+  lbl.className = 'sem-label';
+  lbl.textContent = label;
+  div.appendChild(lbl);
+  return div;
 }
 
 function buildCourseCard(course) {
@@ -429,10 +484,20 @@ function buildCourseCard(course) {
   if (course.socialImpact) badges.appendChild(makeBadge('SI', 'si'));
 
   card.appendChild(badges);
+
+  // Semester tag — only for semester courses, not yearlong
+  if (course.semester && course.semester !== 'yearlong') {
+    const semTag = document.createElement('div');
+    semTag.className = 'card-sem';
+    const semLabels = { fall: 'fall', spring: 'spring', 'fall-spring': 'fall or spring' };
+    semTag.textContent = semLabels[course.semester] || course.semester;
+    card.appendChild(semTag);
+  }
+
   return card;
 }
 
-function buildElectiveGroup(electives) {
+function buildElectiveGroup(electives, { chooseN = 2 } = {}) {
   const group = document.createElement('div');
   group.className = 'elective-group';
   group.dataset.expanded = 'false';
@@ -441,7 +506,7 @@ function buildElectiveGroup(electives) {
   header.className = 'elective-group-header';
   header.innerHTML = `
     <span class="elective-group-title">Senior Electives</span>
-    <span class="elective-group-meta">choose 2 · ${electives.length} options</span>
+    <span class="elective-group-meta">choose ${chooseN} · ${electives.length} options</span>
     <span class="elective-group-toggle">▼</span>
   `;
 
@@ -788,10 +853,11 @@ function updateLangHint() {
 
 function updateScienceHint() {
   const hints = {
-    'physics':   'Standard sequence: Physics → Chemistry → Biology → advanced electives.',
-    'chemistry': 'In Chemistry now. Biology next, then advanced science electives open up.',
-    'biology':   'In Biology now. Advanced Molecular Bio, Chemistry, Physics open next year.',
-    'advanced':  'Completed Physics, Chemistry & Biology. Focus on advanced electives.',
+    'physics-1d': '1D track: algebraic tools. Most students placed here. Leads to Chemistry.',
+    'physics-2d': '2D track: adds trig — stronger prep for Accelerated Chemistry & Advanced Physics.',
+    'chemistry':  'In Chemistry. Biology next year, then advanced science electives open up.',
+    'biology':    'In Biology. Advanced Molecular Bio, Chemistry, Physics available next year.',
+    'advanced':   'Completed Physics, Chemistry & Biology. Focus on advanced electives.',
   };
   const el = document.getElementById('science-hint');
   if (el) el.textContent = hints[state.scienceLevel] || '';

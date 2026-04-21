@@ -97,7 +97,7 @@ const COURSES = [
     notes: 'Civil War in fall; social reformers and civil rights in spring.', deadlineNote: null },
 
   { id: 'hist-civics', name: 'Civics, Government & the Economy', department: 'History', grades: [11, 12],
-    semester: 'semester', honors: false, ap: false, socialImpact: false,
+    semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: ['hist-us'], unlocks: [],
     tags: ['required'],
     notes: 'Required for 11th grade. Open to 12th grade for 2026-27.', deadlineNote: null },
@@ -282,12 +282,20 @@ const COURSES = [
 
   // ── SCIENCE ───────────────────────────────────────────────────────────────
 
-  { id: 'sci-physics', name: 'Physics Foundation', department: 'Science', grades: [9],
+  { id: 'sci-physics-1d', name: 'Physics Foundation (1D)', department: 'Science', grades: [9],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: ['sci-chemistry', 'sci-chem-h'],
     tags: ['required'],
-    prereqNotes: 'Placement by department based on transcript, teacher rec, and STEM diagnostic. Two tracks: One-dimensional (algebraic) or Two-dimensional (trig + algebraic).',
-    notes: 'Two placement tracks: One-dimensional Physics (algebraic tools) or Two-dimensional Physics (adds trigonometry and systems of equations). Both are yearlong, both require the Science Inquiry Project (SIP).',
+    prereqNotes: 'Placement by department based on transcript, teacher rec, and STEM diagnostic.',
+    notes: 'One-dimensional track: algebraic tools only. Covers kinematics, dynamics, energy, and waves. Requires Science Inquiry Project (SIP). Most students are placed here.',
+    deadlineNote: null },
+
+  { id: 'sci-physics-2d', name: 'Physics Foundation (2D)', department: 'Science', grades: [9],
+    semester: 'yearlong', honors: false, ap: false, socialImpact: false,
+    prereqs: [], unlocks: ['sci-chemistry', 'sci-chem-h'],
+    tags: ['required', 'decision', 'stem'],
+    prereqNotes: 'Placement by department. Requires strong math background — trigonometry and systems of equations.',
+    notes: 'Two-dimensional track: adds trigonometry and 2D vector analysis to the 1D content. Stronger preparation for Accelerated Chemistry and Advanced Physics. Requires Science Inquiry Project (SIP).',
     deadlineNote: null },
 
   { id: 'sci-chemistry', name: 'Chemistry', department: 'Science', grades: [10],
@@ -587,7 +595,7 @@ const COURSES = [
   // ── SPECIAL PROGRAMS ─────────────────────────────────────────────────────
 
   { id: 'ta-program', name: 'Teaching Assistant Program', department: 'Special', grades: [11, 12],
-    semester: 'semester', honors: false, ap: false, socialImpact: false,
+    semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [],
     prereqNotes: 'Strong record in subject; application required by May 1 of junior year',
     unlocks: [],
@@ -596,7 +604,7 @@ const COURSES = [
     deadlineNote: 'APPLICATION DEADLINE: May 1 of junior year (11th grade). Must apply to have this option in 12th grade.' },
 
   { id: 'winterim', name: 'Winterim', department: 'Special', grades: [9, 10, 11, 12],
-    semester: 'semester', honors: false, ap: false, socialImpact: false,
+    semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: [], unlocks: [],
     tags: ['required'],
     notes: 'Six days before spring break. Immersive experiential learning. Required every year. Domestic and international options.',
