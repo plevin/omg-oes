@@ -1095,6 +1095,13 @@ html, body {
   overflow: auto;
 }
 
+/* The catalog .view has padding: 16px, so .grid-header uses top: -16px to
+   cancel it and stick flush to the visible top. The plan view's scroll
+   container (.plan-grid-scroll) has no padding, so override to top: 0. */
+.plan-grid-scroll .grid-header {
+  top: 0;
+}
+
 /* Capacity bar under each grade-year column header */
 .capacity-bar {
   font-size: 10px;

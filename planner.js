@@ -386,7 +386,10 @@ function loadPlan() {
       if (Array.isArray(entry)) plan.set(entry[0], entry[1]);
       // else: legacy string IDs — skip (grade unknown, will need re-planning)
     });
-  } catch(e) { plan.clear(); }
+  } catch(e) {
+    plan.clear();
+    showToast("Your saved plan couldn't be loaded — it may be corrupted. Starting fresh.");
+  }
 }
 
 function validatePlanAfterProfileChange() {
