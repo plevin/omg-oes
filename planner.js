@@ -1199,6 +1199,9 @@ function toggleSidebar() {
   const sidebar = document.getElementById('sidebar');
   const collapsed = sidebar.classList.toggle('collapsed');
   localStorage.setItem('oes-sidebar-collapsed', collapsed ? '1' : '0');
+  // On mobile, show/hide the backdrop overlay
+  document.getElementById('sidebar-backdrop')
+    ?.classList.toggle('visible', !collapsed && window.innerWidth <= 640);
 }
 
 // ── PROFILE CHANGE HANDLERS ─────────────────────────────────────────────────
@@ -1427,7 +1430,9 @@ function getCourseById(id) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 function init() {
-  if (localStorage.getItem('oes-sidebar-collapsed') === '1') {
+  const savedCollapsed = localStorage.getItem('oes-sidebar-collapsed');
+  const isNarrow = window.innerWidth <= 900;
+  if (savedCollapsed === '1' || (savedCollapsed === null && isNarrow)) {
     document.getElementById('sidebar')?.classList.add('collapsed');
   }
   loadPlan();

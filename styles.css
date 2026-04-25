@@ -60,6 +60,10 @@
   --radius: 8px;
   --radius-sm: 5px;
   --shadow: 0 1px 3px rgba(0,0,0,0.08);
+
+  /* Grid column sizing — overridden at mobile breakpoint */
+  --grid-label-width: 120px;
+  --grid-col-template: 1fr;
 }
 
 html, body {
@@ -271,6 +275,7 @@ html, body {
   border-radius: var(--radius-sm);
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   cursor: pointer;
   color: var(--color-text-secondary);
   font-size: 14px;
@@ -361,7 +366,7 @@ html, body {
 
 .grid-header {
   display: grid;
-  grid-template-columns: 120px repeat(var(--grid-cols), 1fr);
+  grid-template-columns: var(--grid-label-width) repeat(var(--grid-cols), var(--grid-col-template));
   gap: 8px;
   margin-bottom: 8px;
   position: sticky;
@@ -373,7 +378,10 @@ html, body {
   border-bottom: 1px solid var(--color-border);
 }
 
-.grid-corner { /* empty top-left */ }
+.grid-corner {
+  /* empty top-left; background needed for sticky-left on mobile */
+  background: var(--color-bg);
+}
 
 .grade-label {
   font-size: 13px;
@@ -402,7 +410,7 @@ html, body {
 
 .grid-row {
   display: grid;
-  grid-template-columns: 120px repeat(var(--grid-cols), 1fr);
+  grid-template-columns: var(--grid-label-width) repeat(var(--grid-cols), var(--grid-col-template));
   gap: 8px;
   align-items: start;
   min-height: 60px;
@@ -1257,11 +1265,94 @@ html, body {
 .toast-warning { background: #b45309; color: #fff; }
 .toast-info    { background: #1d4ed8; color: #fff; }
 
+/* ── SIDEBAR BACKDROP (mobile overlay) ─────────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 199;
+  touch-action: none;
+}
+.sidebar-backdrop.visible { display: block; }
+
 /* ── UTILITIES ─────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-@media (max-width: 700px) {
-  .sidebar { display: none; }
-  .grid-header, .grid-row { grid-template-columns: 80px repeat(4, 1fr); }
-  .card-name { font-size: 10px; }
+/* ── TABLET (≤ 900px) ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  :root { --detail-width: 280px; }
+  .tab-btn { padding: 5px 10px; font-size: 12px; }
+}
+
+/* ── MOBILE (≤ 640px) ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Sidebar: fixed overlay instead of in-flow panel */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 200;
+    width: 280px;
+    opacity: 1;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+  }
+  .sidebar.collapsed {
+    width: 0;
+    opacity: 0;
+    box-shadow: none;
+  }
+
+  /* Detail panel: full-width overlay */
+  :root { --detail-width: min(100vw, 360px); }
+  .detail-panel:not(.hidden) {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 150;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Grid: fixed column widths so the container is wider than the viewport,
+     enabling horizontal scroll in .view / .plan-grid-scroll */
+  :root {
+    --grid-label-width: 90px;
+    --grid-col-template: 160px;
+  }
+  .grid-container { min-width: unset; }
+
+  /* Sticky row labels pin to the left edge during horizontal scroll */
+  .row-label {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background: var(--color-bg);
+    border-right: 1px solid var(--color-border);
+    padding-right: 6px;
+  }
+  /* Corner cell is sticky both top (inherited from .grid-header) and left */
+  .grid-corner {
+    position: sticky;
+    left: 0;
+    z-index: 11;
+  }
+
+  /* Touch targets: 44px minimum */
+  .sidebar-toggle { width: 44px; height: 44px; font-size: 18px; }
+  .tab-btn { min-height: 44px; padding: 0 10px; font-size: 12px; white-space: nowrap; }
+  /* Let tab row scroll so long labels don't wrap */
+  .top-bar { height: auto; min-height: var(--header-height); }
+  .view-tabs { overflow-x: auto; flex-shrink: 1; min-width: 0; }
+  .course-card { min-height: 44px; }
+  .add-slot-btn { min-height: 44px; }
+  .badge { padding: 3px 7px; font-size: 11px; }
+  .detail-close { width: 36px; height: 36px; }
+
+  /* Readable card text at narrow column width */
+  .card-name { font-size: 11px; }
+
+  /* No print button on mobile */
+  .print-btn { display: none; }
 }
