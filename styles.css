@@ -1230,6 +1230,33 @@ html, body {
 .pill-check { font-weight: 700; }
 .pill-count { font-weight: 600; }
 
+/* ── TOAST NOTIFICATIONS ───────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  max-width: 480px;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  pointer-events: none;
+}
+.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.toast-error   { background: #dc2626; color: #fff; }
+.toast-warning { background: #b45309; color: #fff; }
+.toast-info    { background: #1d4ed8; color: #fff; }
+
 /* ── UTILITIES ─────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 

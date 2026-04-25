@@ -36,6 +36,21 @@ const PLAN_LABELS = {
   12: 'Final year plan',
 };
 
+// ── TOAST ─────────────────────────────────────────────────────────────────
+
+function showToast(message, type = 'error') {
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  // Trigger transition
+  requestAnimationFrame(() => toast.classList.add('toast-visible'));
+  setTimeout(() => {
+    toast.classList.remove('toast-visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  }, 4500);
+}
+
 // ── DEPARTMENT ROW DEFINITIONS ────────────────────────────────────────────
 
 const DEPT_ROWS = [
@@ -355,7 +370,11 @@ function togglePlan(courseId) {
 }
 
 function savePlan() {
-  try { localStorage.setItem('oes-plan-v1', JSON.stringify([...plan.entries()])); } catch(e) {}
+  try {
+    localStorage.setItem('oes-plan-v1', JSON.stringify([...plan.entries()]));
+  } catch(e) {
+    showToast("Your plan couldn't be saved — storage may be full or unavailable in private browsing.");
+  }
 }
 
 function loadPlan() {
@@ -370,8 +389,25 @@ function loadPlan() {
   } catch(e) { plan.clear(); }
 }
 
+function validatePlanAfterProfileChange() {
+  const broken = [];
+  for (const [id] of plan) {
+    if (!canPlan(id)) {
+      const c = getCourseById(id);
+      if (c) broken.push(c.name);
+    }
+  }
+  if (broken.length > 0) {
+    const names = broken.length <= 2
+      ? broken.join(' and ')
+      : broken.slice(0, 2).join(', ') + ` and ${broken.length - 2} more`;
+    showToast(`Profile change broke prereqs for: ${names}. Review your plan.`, 'warning');
+  }
+}
+
 function refreshPlanForProfileChange() {
   seedLockedCourses();
+  validatePlanAfterProfileChange();
   savePlan();
   if (!document.getElementById('view-plan')?.classList.contains('hidden')) {
     renderPlanGrid();
@@ -1160,7 +1196,9 @@ function updatePlanLabel() {
 // ── SIDEBAR TOGGLE ──────────────────────────────────────────────────────────
 
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
+  const sidebar = document.getElementById('sidebar');
+  const collapsed = sidebar.classList.toggle('collapsed');
+  localStorage.setItem('oes-sidebar-collapsed', collapsed ? '1' : '0');
 }
 
 // ── PROFILE CHANGE HANDLERS ─────────────────────────────────────────────────
@@ -1389,6 +1427,11 @@ function getCourseById(id) {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 function init() {
+  if (localStorage.getItem('oes-sidebar-collapsed') === '1') {
+    document.getElementById('sidebar')?.classList.add('collapsed');
+  }
+  loadPlan();
+  seedLockedCourses();
   renderGridHeader();
   updatePlanLabel();
   renderGrid();
