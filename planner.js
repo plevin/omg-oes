@@ -1432,7 +1432,10 @@ function getCourseById(id) {
 function init() {
   const savedCollapsed = localStorage.getItem('oes-sidebar-collapsed');
   const isNarrow = window.innerWidth <= 900;
-  if (savedCollapsed === '1' || (savedCollapsed === null && isNarrow)) {
+  const isMobile = window.innerWidth <= 640;
+  // On mobile the sidebar is a fixed overlay — always start it closed so the
+  // hamburger button is never buried underneath it on load.
+  if (isMobile || savedCollapsed === '1' || (savedCollapsed === null && isNarrow)) {
     document.getElementById('sidebar')?.classList.add('collapsed');
   }
   loadPlan();
