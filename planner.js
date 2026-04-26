@@ -592,9 +592,10 @@ function buildAddSlot(dept, grade, deptCourses) {
   const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
     if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
     if (c.id === 'winterim') return false;
-    // Arts courses are available across many grades — show ones listed for this grade
-    if (dept === 'Arts') return c.grades.includes(grade);
-    return displayGrade(c) === grade;
+    // Use the course's own grade range for eligibility — the student is choosing
+    // which year to schedule the course, so any year it's offered is valid.
+    // (displayGrade is for the catalog view's sequencing logic, not scheduling choice.)
+    return c.grades.includes(grade);
   });
 
   if (eligible.length === 0) return null;
