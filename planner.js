@@ -178,6 +178,18 @@ const LANG_LEVEL_FOR_COURSE = {
   'lang-chinese5': 5,
 };
 
+// Returns true if the course belongs to the student's primary language track.
+// Primary-language courses are placement-anchored (displayGrade handles offsets).
+// Secondary-language courses are free-choice — the student picks the starting year.
+function isPrimaryLanguageCourse(course) {
+  const prefixes = {
+    spanish: ['lang-spanish', 'lang-ap-spanish', 'lang-hlc'],
+    french:  ['lang-french',  'lang-ap-french'],
+    chinese: ['lang-chinese'],
+  };
+  return (prefixes[state.language] || []).some(p => course.id.startsWith(p));
+}
+
 // ── EFFECTIVE TAGS ────────────────────────────────────────────────────────
 // Returns a course's stored tags augmented with implicit department-based
 // interest tags. This avoids having to manually add 'english' or 'humanities'
@@ -618,12 +630,14 @@ function buildAddSlot(dept, grade, deptCourses) {
   const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
     if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
     if (c.id === 'winterim') return false;
-    // Math, Science, and Language sequences are placement-anchored: displayGrade()
-    // offsets the course to the right year based on the student's current level.
-    // For all other departments the student freely chooses which year to take the
-    // course, so we just check whether it's offered in that grade.
-    if (dept === 'Math' || dept === 'Science' || dept === 'World Languages') {
-      return displayGrade(c) === grade;
+    // Math and Science sequences are placement-anchored: displayGrade() offsets
+    // the course to the right year based on the student's current level.
+    if (dept === 'Math' || dept === 'Science') return displayGrade(c) === grade;
+    // World Languages: primary-language courses are placement-anchored the same way.
+    // Secondary-language courses (a new track the student starts) are free-choice —
+    // they appear in any grade they're offered, just like electives.
+    if (dept === 'World Languages') {
+      return isPrimaryLanguageCourse(c) ? displayGrade(c) === grade : c.grades.includes(grade);
     }
     return c.grades.includes(grade);
   });
