@@ -352,13 +352,35 @@ function seedLockedCourses() {
   for (const id of lockedCourses) plan.delete(id);
 }
 
-function canPlan(courseId) {
+// forGrade: the year the student wants to take courseId. When provided,
+// a planned prereq is only valid if it is scheduled BEFORE that year.
+// Locked courses (current year) always count as satisfied.
+function canPlan(courseId, forGrade = null) {
   const course = getCourseById(courseId);
   if (!course) return false;
   return (course.prereqs || []).every(prereqId => {
-    if (plan.has(prereqId) || lockedCourses.has(prereqId)) return true;
+    if (lockedCourses.has(prereqId)) return true;            // taking it now ✓
     const prereq = getCourseById(prereqId);
-    return prereq ? isCompleted(prereq) : true; // unknown prereq → don't block
+    if (prereq && isCompleted(prereq)) return true;          // already done ✓
+    if (plan.has(prereqId)) {
+      if (forGrade === null) return true;                    // no timing context — permissive
+      return plan.get(prereqId) < forGrade;                  // must be scheduled BEFORE
+    }
+    return false;
+  });
+}
+
+// Return the names of prereqs that are missing or not yet scheduled
+// before forGrade, for use in error messages.
+function missingPrereqs(courseId, forGrade) {
+  const course = getCourseById(courseId);
+  if (!course) return [];
+  return (course.prereqs || []).flatMap(prereqId => {
+    if (lockedCourses.has(prereqId)) return [];
+    const prereq = getCourseById(prereqId);
+    if (prereq && isCompleted(prereq)) return [];
+    if (plan.has(prereqId) && plan.get(prereqId) < forGrade) return [];
+    return prereq ? [prereq.name] : [];
   });
 }
 
@@ -590,12 +612,18 @@ function buildAddSlot(dept, grade, deptCourses) {
   // Populate picker items
   eligible.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
     const item = document.createElement('div');
-    const warn = !canPlan(c.id);
+    const warn = !canPlan(c.id, grade);
     item.className = `add-slot-item${warn ? ' prereq-warn' : ''}`;
     const semLabel = { fall: '· fall', spring: '· spring', 'fall-spring': '· fall or spring', yearlong: '' }[c.semester] ?? '';
     item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel}${warn ? ' ⚠ prereq' : ''}</span>`;
     item.addEventListener('click', e => {
       e.stopPropagation();
+      if (!canPlan(c.id, grade)) {
+        const missing = missingPrereqs(c.id, grade).join(', ');
+        showToast(`Add prerequisite first: ${missing || 'a required prior course'}.`, 'warning');
+        picker.classList.add('hidden');
+        return;
+      }
       plan.set(c.id, grade); // record which year the student is planning this course
       savePlan();
       picker.classList.add('hidden');
