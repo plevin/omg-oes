@@ -397,8 +397,15 @@ function canPlan(courseId, forGrade = null) {
   return (course.prereqs || []).every(prereqId => {
     const candidates = resolvePrereq(prereqId);
     return candidates.some(cid => {
-      if (lockedCourses.has(cid)) return true;               // taking it now ✓
       const prereq = getCourseById(cid);
+      if (lockedCourses.has(cid)) {
+        // Locked = being taken in currentGrade.
+        if (forGrade === null) return true;
+        // Future year: the prereq will be finished by then.
+        if (forGrade > state.currentGrade) return true;
+        // Same year: only OK if prereq ends before course starts (fall → spring).
+        return prereqFallCourseSpring(prereq, course);
+      }
       if (prereq && isCompleted(prereq)) return true;        // already done ✓
       if (plan.has(cid)) {
         if (forGrade === null) return true;                  // no timing context — permissive
@@ -420,8 +427,11 @@ function missingPrereqs(courseId, forGrade) {
   return (course.prereqs || []).flatMap(prereqId => {
     const candidates = resolvePrereq(prereqId);
     const satisfied = candidates.some(cid => {
-      if (lockedCourses.has(cid)) return true;
       const prereq = getCourseById(cid);
+      if (lockedCourses.has(cid)) {
+        if (forGrade > state.currentGrade) return true;
+        return prereqFallCourseSpring(prereq, course);
+      }
       if (prereq && isCompleted(prereq)) return true;
       if (plan.has(cid)) {
         const plannedGrade = plan.get(cid);
