@@ -380,8 +380,16 @@ function resolvePrereq(prereqId) {
   return PREREQ_ALIASES[prereqId] ?? [prereqId];
 }
 
+// Returns true if a prereq finishing in fall can satisfy a course starting in spring
+// of the same year — e.g. World Religions (fall) → Buddhism (spring), same grade.
+function prereqFallCourseSpring(prereq, course) {
+  return (prereq?.semester === 'fall' || prereq?.semester === 'fall-spring') &&
+         course?.semester === 'spring';
+}
+
 // forGrade: the year the student wants to take courseId. When provided,
-// a planned prereq is only valid if it is scheduled BEFORE that year.
+// a planned prereq is only valid if it is scheduled before that year —
+// or in the same year if the prereq is fall and the course is spring.
 // Locked courses (current year) always count as satisfied.
 function canPlan(courseId, forGrade = null) {
   const course = getCourseById(courseId);
@@ -394,7 +402,10 @@ function canPlan(courseId, forGrade = null) {
       if (prereq && isCompleted(prereq)) return true;        // already done ✓
       if (plan.has(cid)) {
         if (forGrade === null) return true;                  // no timing context — permissive
-        return plan.get(cid) < forGrade;                     // must be scheduled BEFORE
+        const plannedGrade = plan.get(cid);
+        // Fall prereq can be done before a spring course in the same year
+        if (prereqFallCourseSpring(prereq, course)) return plannedGrade <= forGrade;
+        return plannedGrade < forGrade;
       }
       return false;
     });
@@ -412,7 +423,11 @@ function missingPrereqs(courseId, forGrade) {
       if (lockedCourses.has(cid)) return true;
       const prereq = getCourseById(cid);
       if (prereq && isCompleted(prereq)) return true;
-      if (plan.has(cid) && plan.get(cid) < forGrade) return true;
+      if (plan.has(cid)) {
+        const plannedGrade = plan.get(cid);
+        if (prereqFallCourseSpring(prereq, course)) return plannedGrade <= forGrade;
+        return plannedGrade < forGrade;
+      }
       return false;
     });
     if (satisfied) return [];
