@@ -840,6 +840,9 @@ function renderGrid() {
                .forEach(c => cell.appendChild(buildCourseCard(c)));
 
         // ── 2. Semester courses: fall half | spring half
+        //    When a half has more than 2 courses they're elective choices —
+        //    collapse them into a compact group widget to prevent the row from
+        //    growing to hundreds of pixels (e.g. History grade 11).
         const fallReg   = regular.filter(c => c.semester === 'fall' || c.semester === 'fall-spring');
         const springReg = regular.filter(c => c.semester === 'spring');
 
@@ -848,12 +851,20 @@ function renderGrid() {
           semRow.className = 'cell-semesters';
           if (fallReg.length > 0) {
             const half = makeSemHalf('Fall');
-            fallReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            if (fallReg.length > 2) {
+              half.appendChild(buildElectiveGroup(fallReg, { title: 'Electives', chooseN: 1 }));
+            } else {
+              fallReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            }
             semRow.appendChild(half);
           }
           if (springReg.length > 0) {
             const half = makeSemHalf('Spring');
-            springReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            if (springReg.length > 2) {
+              half.appendChild(buildElectiveGroup(springReg, { title: 'Electives', chooseN: 1 }));
+            } else {
+              springReg.forEach(c => half.appendChild(buildCourseCard(c)));
+            }
             semRow.appendChild(half);
           }
           cell.appendChild(semRow);
@@ -951,7 +962,9 @@ function buildElectiveGroup(electives, { title = 'Senior Electives', chooseN = 2
   electives.forEach(course => {
     const item = document.createElement('div');
     item.className = 'elective-item';
-    item.textContent = course.name + (course.semester === 'fall' ? ' (fall)' : course.semester === 'spring' ? ' (spring)' : '');
+    const semSuffix = { fall: ' (fall)', spring: ' (spring)', 'fall-spring': ' (fall or spring)' }[course.semester] ?? '';
+    const honorsSuffix = course.honors ? ' — H' : course.ap ? ' — AP' : '';
+    item.textContent = course.name + honorsSuffix + semSuffix;
     item.addEventListener('click', e => { e.stopPropagation(); showDetail(course.id); });
     list.appendChild(item);
   });
