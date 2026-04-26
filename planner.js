@@ -592,9 +592,13 @@ function buildAddSlot(dept, grade, deptCourses) {
   const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
     if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
     if (c.id === 'winterim') return false;
-    // Use the course's own grade range for eligibility — the student is choosing
-    // which year to schedule the course, so any year it's offered is valid.
-    // (displayGrade is for the catalog view's sequencing logic, not scheduling choice.)
+    // Math, Science, and Language sequences are placement-anchored: displayGrade()
+    // offsets the course to the right year based on the student's current level.
+    // For all other departments the student freely chooses which year to take the
+    // course, so we just check whether it's offered in that grade.
+    if (dept === 'Math' || dept === 'Science' || dept === 'World Languages') {
+      return displayGrade(c) === grade;
+    }
     return c.grades.includes(grade);
   });
 
