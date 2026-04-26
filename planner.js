@@ -120,8 +120,8 @@ const MATH_GRADE_OFFSET = {
   'math-ap-stats': 3,
   'math-calc-ab': 4,       // Grade 12
   'math-calc-bc': 4,
-  'math-linear-alg': 4,
-  'math-multivariable': 4,
+  'math-linear-alg': 5,   // Year after Calc BC (not concurrent)
+  'math-multivariable': 5,
 };
 
 // ── SCIENCE LEVEL ORDERING ────────────────────────────────────────────────
@@ -217,13 +217,13 @@ function getCourseStatus(course) {
   // Check if locked out based on profile
   if (isLockedOut(course)) return 'locked';
 
-  // Priority: deadline > decision > unique > recommended > required
+  // Priority: deadline > recommended > decision > unique > required
+  // isRecommended comes before decision/unique so interest-matched courses
+  // (e.g. Python I, Machine Learning with CS interest) get the recommended highlight.
   if (tags.includes('deadline')) return 'deadline';
+  if (isRecommended(course)) return 'recommended';
   if (tags.includes('decision')) return 'decision';
   if (tags.includes('unique')) return 'unique';
-
-  // Check if recommended based on interests
-  if (isRecommended(course)) return 'recommended';
 
   return 'required';
 }
@@ -244,8 +244,13 @@ function isCompleted(course) {
   if (course.department === 'World Languages') {
     const courseLevel = LANG_LEVEL_FOR_COURSE[course.id];
     if (courseLevel === undefined) return false;
-    // Course is completed if student's current level is strictly beyond it
     return state.langLevel > courseLevel;
+  }
+  // English grades 9–11 are completed once the student is past that grade year.
+  // eng9 is done after grade 9, eng10 after grade 10, eng11 after grade 11.
+  const engGrade = { 'eng9': 9, 'eng10': 10, 'eng11': 11 };
+  if (engGrade[course.id] !== undefined) {
+    return state.currentGrade > engGrade[course.id];
   }
   return false;
 }
@@ -726,11 +731,14 @@ function renderWhatsLeft() {
 
   container.innerHTML = '';
 
-  // Credit totals by department (locked + planned)
+  // Credit totals by department (locked + planned).
+  // Exclude current-year locked courses — they're in-progress, not yet earned.
+  // Health is the exception: it's always locked and always counts (all students have it).
   const credits = {};
   for (const id of [...lockedCourses, ...plan.keys()]) {
     const c = getCourseById(id);
     if (!c) continue;
+    if (lockedCourses.has(id) && c.id !== 'health' && displayGrade(c) === state.currentGrade) continue;
     const dept = c.department;
     credits[dept] = (credits[dept] || 0) + (c.semester === 'yearlong' ? 1 : 0.5);
   }
@@ -1023,6 +1031,8 @@ function buildCourseCard(course) {
   badges.className = 'card-badges';
 
   if (status === 'completed') badges.appendChild(makeBadge('✓', 'completed'));
+  if (status === 'deadline') badges.appendChild(makeBadge('!', 'deadline'));
+  if (status === 'locked')   badges.appendChild(makeBadge('–', 'locked'));
   if (course.honors) badges.appendChild(makeBadge('H', 'honors'));
   if (course.ap) badges.appendChild(makeBadge('AP', 'ap'));
   if (course.socialImpact) badges.appendChild(makeBadge('SI', 'si'));
@@ -1401,7 +1411,7 @@ function updateMathHint() {
     'precalc':   'AP Calc AB next year. Strong foundation for science and CS.',
     'precalc-h': 'Honors track → AP Calc BC, then Linear Algebra (H) + Multivariable Calc (H).',
     'calc-ab':   'AP Calc AB → BC next year opens Linear Algebra (H) + Multivariable Calc (H).',
-    'calc-bc':   'Top math track. Linear Algebra (H) + Multivariable Calc (H) available this year.',
+    'calc-bc':   'Top math track. Linear Algebra (H) + Multivariable Calc (H) available next year.',
   };
   const el = document.getElementById('math-hint');
   if (el) el.textContent = hints[state.mathLevel] || '';

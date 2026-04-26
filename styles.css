@@ -1355,7 +1355,7 @@ html, body {
   .course-card { min-height: 44px; }
   .add-slot-btn { min-height: 44px; }
   .badge { padding: 3px 7px; font-size: 11px; }
-  .detail-close { width: 36px; height: 36px; }
+  .detail-close { width: 44px; height: 44px; }
 
   /* Readable card text at narrow column width */
   .card-name { font-size: 11px; }
