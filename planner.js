@@ -352,6 +352,18 @@ function seedLockedCourses() {
   for (const id of lockedCourses) plan.delete(id);
 }
 
+// Some prereq IDs in courses-data.js are abstract/group IDs that don't correspond
+// to a single real course — they're satisfied by any of the listed concrete courses.
+// e.g. 'sci-physics' means "any Physics Foundation course" (1D or 2D).
+const PREREQ_ALIASES = {
+  'sci-physics': ['sci-physics-1d', 'sci-physics-2d'],
+};
+
+// Resolve a prereq ID to the concrete IDs that can satisfy it.
+function resolvePrereq(prereqId) {
+  return PREREQ_ALIASES[prereqId] ?? [prereqId];
+}
+
 // forGrade: the year the student wants to take courseId. When provided,
 // a planned prereq is only valid if it is scheduled BEFORE that year.
 // Locked courses (current year) always count as satisfied.
@@ -359,14 +371,17 @@ function canPlan(courseId, forGrade = null) {
   const course = getCourseById(courseId);
   if (!course) return false;
   return (course.prereqs || []).every(prereqId => {
-    if (lockedCourses.has(prereqId)) return true;            // taking it now ✓
-    const prereq = getCourseById(prereqId);
-    if (prereq && isCompleted(prereq)) return true;          // already done ✓
-    if (plan.has(prereqId)) {
-      if (forGrade === null) return true;                    // no timing context — permissive
-      return plan.get(prereqId) < forGrade;                  // must be scheduled BEFORE
-    }
-    return false;
+    const candidates = resolvePrereq(prereqId);
+    return candidates.some(cid => {
+      if (lockedCourses.has(cid)) return true;               // taking it now ✓
+      const prereq = getCourseById(cid);
+      if (prereq && isCompleted(prereq)) return true;        // already done ✓
+      if (plan.has(cid)) {
+        if (forGrade === null) return true;                  // no timing context — permissive
+        return plan.get(cid) < forGrade;                     // must be scheduled BEFORE
+      }
+      return false;
+    });
   });
 }
 
@@ -376,11 +391,18 @@ function missingPrereqs(courseId, forGrade) {
   const course = getCourseById(courseId);
   if (!course) return [];
   return (course.prereqs || []).flatMap(prereqId => {
-    if (lockedCourses.has(prereqId)) return [];
-    const prereq = getCourseById(prereqId);
-    if (prereq && isCompleted(prereq)) return [];
-    if (plan.has(prereqId) && plan.get(prereqId) < forGrade) return [];
-    return prereq ? [prereq.name] : [];
+    const candidates = resolvePrereq(prereqId);
+    const satisfied = candidates.some(cid => {
+      if (lockedCourses.has(cid)) return true;
+      const prereq = getCourseById(cid);
+      if (prereq && isCompleted(prereq)) return true;
+      if (plan.has(cid) && plan.get(cid) < forGrade) return true;
+      return false;
+    });
+    if (satisfied) return [];
+    // Return the name of the first real candidate for the error message
+    const first = candidates.map(getCourseById).find(Boolean);
+    return first ? [first.name] : [prereqId];
   });
 }
 
