@@ -5,16 +5,16 @@
 
 const state = {
   currentGrade: 9,        // Student's current grade (9–12)
-  mathLevel: 'geometry',
+  mathLevel: 'advalg',
   scienceLevel: 'physics-1d', // Current science placement
   language: 'spanish',
   langLevel: 2,
   interests: {
-    stem:       true,
+    stem:       false,
     cs:         false,
     english:    false,
     humanities: false,
-    lang:       true,
+    lang:       false,
     arts:       false,
   },
   selectedCourseId: null,
