@@ -114,7 +114,7 @@ const MATH_GRADE_OFFSET = {
   'math-geometry': 1,
   'math-advalg': 2,       // Grade 10 for standard Geometry student
   'math-advalg-proofs': 2, // Grade 10 — same year, honors option
-  'math-stats': 2,
+  'math-stats': 3,         // Grade 11 — after Advanced Algebra (offset 2)
   'math-precalc': 3,       // Grade 11
   'math-precalc-proofs': 3,
   'math-ap-stats': 3,
