@@ -342,8 +342,12 @@ function seedLockedCourses() {
   const histId = histForGrade[state.currentGrade];
   if (histId) lockedCourses.add(histId);
 
-  // Health (required in grade 9)
-  if (state.currentGrade === 9) lockedCourses.add('health');
+  // Health (required in grade 9 — all students have taken or are taking it)
+  // Always lock it so it counts toward grad-requirement credits regardless of
+  // current grade. displayGrade() clamps it to grade 9, so it only appears
+  // in the grid column for 9th graders; for older students it's invisible
+  // but still contributes its credit to renderWhatsLeft().
+  lockedCourses.add('health');
 
   // Winterim — happens every year; lock it in each year's Special cell
   lockedCourses.add('winterim');
