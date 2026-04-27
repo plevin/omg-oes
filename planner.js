@@ -482,25 +482,28 @@ function loadPlan() {
   }
 }
 
-function validatePlanAfterProfileChange() {
-  const broken = [];
+function refreshPlanForProfileChange() {
+  // Snapshot which courses were already broken BEFORE this profile change.
+  // We only want to warn about courses that became newly broken — not ones
+  // that had pre-existing plan issues unrelated to what the user just changed.
+  const alreadyBroken = new Set([...plan.keys()].filter(id => !canPlan(id)));
+
+  seedLockedCourses();
+
+  const newlyBroken = [];
   for (const [id] of plan) {
-    if (!canPlan(id)) {
+    if (!canPlan(id) && !alreadyBroken.has(id)) {
       const c = getCourseById(id);
-      if (c) broken.push(c.name);
+      if (c) newlyBroken.push(c.name);
     }
   }
-  if (broken.length > 0) {
-    const names = broken.length <= 2
-      ? broken.join(' and ')
-      : broken.slice(0, 2).join(', ') + ` and ${broken.length - 2} more`;
+  if (newlyBroken.length > 0) {
+    const names = newlyBroken.length <= 2
+      ? newlyBroken.join(' and ')
+      : newlyBroken.slice(0, 2).join(', ') + ` and ${newlyBroken.length - 2} more`;
     showToast(`Profile change broke prereqs for: ${names}. Review your plan.`, 'warning');
   }
-}
 
-function refreshPlanForProfileChange() {
-  seedLockedCourses();
-  validatePlanAfterProfileChange();
   savePlan();
   if (!document.getElementById('view-plan')?.classList.contains('hidden')) {
     renderPlanGrid();
