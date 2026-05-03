@@ -1178,15 +1178,25 @@ function renderDeadlines() {
 
   container.innerHTML = '';
 
-  // Sort: critical first
-  const urgencyOrder = { critical: 0, high: 1, medium: 2 };
-  const sorted = [...DEADLINES].sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
+  const urgencyOrder = { critical: 0, high: 1, medium: 2, upcoming: 3 };
+
+  const deadlinesWithEffectiveUrgency = DEADLINES.map(d => ({
+    ...d,
+    effectiveUrgency: state.currentGrade >= (d.gradeRelevant ?? 9) ? d.urgency : 'upcoming',
+  }));
+
+  const sorted = [...deadlinesWithEffectiveUrgency].sort(
+    (a, b) => urgencyOrder[a.effectiveUrgency] - urgencyOrder[b.effectiveUrgency]
+  );
 
   sorted.forEach(deadline => {
     const card = document.createElement('div');
-    card.className = `deadline-card urgency-${deadline.urgency}`;
+    card.className = `deadline-card urgency-${deadline.effectiveUrgency}`;
+    const pillLabel = deadline.effectiveUrgency === 'upcoming'
+      ? `upcoming (gr ${deadline.gradeRelevant})`
+      : deadline.effectiveUrgency;
     card.innerHTML = `
-      <div class="urgency-pill">${deadline.urgency}</div>
+      <div class="urgency-pill">${pillLabel}</div>
       <div class="deadline-when">${deadline.when}</div>
       <div class="deadline-action">${deadline.action}</div>
       <div class="deadline-detail">${deadline.detail}</div>
@@ -1194,8 +1204,10 @@ function renderDeadlines() {
     container.appendChild(card);
   });
 
-  // Update badge count
-  const criticalCount = DEADLINES.filter(d => d.urgency === 'critical' || d.urgency === 'high').length;
+  // Badge counts only currently-relevant critical/high deadlines
+  const criticalCount = deadlinesWithEffectiveUrgency.filter(
+    d => d.effectiveUrgency === 'critical' || d.effectiveUrgency === 'high'
+  ).length;
   const badge = document.getElementById('deadline-count');
   if (badge) badge.textContent = criticalCount;
 }

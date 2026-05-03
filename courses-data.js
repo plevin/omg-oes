@@ -725,14 +725,14 @@ const COURSES = [
 
   // ── SPECIAL PROGRAMS ─────────────────────────────────────────────────────
 
-  { id: 'ta-program', name: 'Teaching Assistant Program', department: 'Special', grades: [11, 12],
+  { id: 'ta-program', name: 'Teaching Assistant Program', department: 'Special', grades: [12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
     prereqs: [],
-    prereqNotes: 'Strong record in subject; application required by May 1 of junior year',
+    prereqNotes: 'Strong record in subject; application required by May 1 of junior year (11th grade) — position is held in 12th grade',
     unlocks: [],
     tags: ['unique', 'deadline'],
     notes: 'Peer tutoring, leading discussions, grading. Can count as 7th class. Transcript entry. Strong college signal.',
-    deadlineNote: 'APPLICATION DEADLINE: May 1 of junior year (11th grade). Must apply to have this option in 12th grade.' },
+    deadlineNote: 'APPLICATION DEADLINE: May 1 of junior year (11th grade). The TA position itself is held in 12th grade — you apply a year in advance.' },
 
   { id: 'winterim', name: 'Winterim', department: 'Special', grades: [9, 10, 11, 12],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
@@ -810,29 +810,41 @@ const CRITICAL_PATHS = [
 
 const DEADLINES = [
   {
-    when: 'Spring of Grade 9 (now — course registration)',
+    when: 'Spring of Grade 9 (course registration)',
     urgency: 'critical',
+    gradeRelevant: 9,
     action: 'Confirm math placement for 10th grade',
-    detail: 'Advanced Algebra with Proofs (H) requires A average in Geometry + teacher recommendation. This is the fork that determines whether he can reach Calc BC, Linear Algebra, and Multivariable Calculus.',
+    detail: 'Advanced Algebra with Proofs (H) requires A average in Geometry + teacher recommendation. This is the fork that determines whether the student can reach Calc BC, Linear Algebra, and Multivariable Calculus.',
     affects: ['math-advalg-proofs', 'math-precalc-proofs', 'math-calc-bc', 'math-linear-alg', 'math-multivariable']
   },
   {
-    when: 'Spring of Grade 9 (now — course registration)',
+    when: 'Grade 10 registration',
     urgency: 'high',
+    gradeRelevant: 9,
+    action: 'Confirm science track',
+    detail: 'Accelerated Chemistry (H) is placement-only (not self-selected). Faculty will assess. If placed, it signals readiness for advanced science electives. Standard Chemistry also feeds all advanced science options.',
+    affects: ['sci-chem-h', 'sci-advbio-mol', 'sci-advchem']
+  },
+  {
+    when: 'Spring of Grade 9 (course registration)',
+    urgency: 'high',
+    gradeRelevant: 9,
     action: 'Decide whether to start CS in 10th grade',
     detail: 'Python I in 10th grade is the only way to reach Machine Learning (H) by senior year. Waiting until 11th grade makes it impossible.',
     affects: ['cs-python1', 'cs-python2', 'cs-python3', 'cs-ml']
   },
   {
-    when: 'Spring of Grade 9 (now)',
+    when: 'Spring of Grade 9 (course registration)',
     urgency: 'medium',
+    gradeRelevant: 9,
     action: 'Plan World Religions timing',
     detail: 'Must complete World Religions before any other Religion & Philosophy course, and no later than fall of senior year. Taking it in 10th grade (spring only) opens up elective options in 11th and 12th.',
     affects: ['rp-worldrel', 'rp-buddhism', 'rp-encounters', 'rp-ethics']
   },
   {
-    when: 'Spring of Grade 9 (now)',
+    when: 'Spring of Grade 9 (course registration)',
     urgency: 'medium',
+    gradeRelevant: 9,
     action: 'Decide on language continuation depth',
     detail: 'Two years fulfills the requirement. But 3–4 years is strongly recommended for selective colleges. AP or HLC/HCC requires Level 4, which means committing to the language through 11th grade.',
     affects: ['lang-spanish4', 'lang-ap-spanish', 'lang-hlc', 'lang-french4', 'lang-ap-french']
@@ -840,23 +852,18 @@ const DEADLINES = [
   {
     when: 'May 1 of Grade 11 (junior year)',
     urgency: 'critical',
+    gradeRelevant: 11,
     action: 'Submit Teaching Assistant application',
-    detail: 'TA program for 12th grade. Hard deadline. Requires demonstrated record in a subject over previous years. Can count as 7th class senior year.',
+    detail: 'You apply in May of 11th grade for a TA position held in 12th grade — the application is a year in advance. Competitive. Requires a strong track record in the subject over prior years. The TA role can count as a 7th class in senior year.',
     affects: ['ta-program']
   },
   {
     when: 'End of Grade 11 (junior year)',
     urgency: 'medium',
+    gradeRelevant: 11,
     action: 'Submit Inquiry in Arts proposal (if interested)',
     detail: 'Fall and spring proposals due end of junior year. Space limited by mentor availability.',
     affects: []
-  },
-  {
-    when: 'Grade 10 registration',
-    urgency: 'high',
-    action: 'Confirm science track',
-    detail: 'Accelerated Chemistry (H) is placement-only (not self-selected). Faculty will assess. If placed, it signals readiness for advanced science electives. Standard Chemistry also feeds all advanced science options.',
-    affects: ['sci-chem-h', 'sci-advbio-mol', 'sci-advchem']
   }
 ];
 
