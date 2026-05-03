@@ -1188,20 +1188,26 @@ function renderDeadlines() {
 
   const urgencyOrder = { critical: 0, high: 1, medium: 2, upcoming: 3 };
 
-  const deadlinesWithEffectiveUrgency = DEADLINES.map(d => ({
-    ...d,
-    effectiveUrgency: state.currentGrade >= (d.gradeRelevant ?? 9) ? d.urgency : 'upcoming',
-  }));
+  const deadlinesWithEffectiveUrgency = DEADLINES
+    .filter(d => state.currentGrade <= (d.gradeRelevant ?? 9))  // hide past deadlines
+    .map(d => ({
+      ...d,
+      effectiveUrgency: state.currentGrade === (d.gradeRelevant ?? 9) ? d.urgency : 'upcoming',
+    }));
 
   const sorted = [...deadlinesWithEffectiveUrgency].sort(
     (a, b) => urgencyOrder[a.effectiveUrgency] - urgencyOrder[b.effectiveUrgency]
   );
 
+  if (sorted.length === 0) {
+    container.innerHTML = '<p class="deadlines-empty">No upcoming deadlines for your current grade.</p>';
+  }
+
   sorted.forEach(deadline => {
     const card = document.createElement('div');
     card.className = `deadline-card urgency-${deadline.effectiveUrgency}`;
     const pillLabel = deadline.effectiveUrgency === 'upcoming'
-      ? `upcoming (gr ${deadline.gradeRelevant})`
+      ? `upcoming · grade ${deadline.gradeRelevant}`
       : deadline.effectiveUrgency;
     card.innerHTML = `
       <div class="urgency-pill">${pillLabel}</div>
@@ -1212,7 +1218,7 @@ function renderDeadlines() {
     container.appendChild(card);
   });
 
-  // Badge counts only currently-relevant critical/high deadlines
+  // Badge counts only currently-actionable critical/high deadlines
   const criticalCount = deadlinesWithEffectiveUrgency.filter(
     d => d.effectiveUrgency === 'critical' || d.effectiveUrgency === 'high'
   ).length;
