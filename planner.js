@@ -54,17 +54,17 @@ function showToast(message, type = 'error') {
 // ── DEPARTMENT ROW DEFINITIONS ────────────────────────────────────────────
 
 const DEPT_ROWS = [
-  { key: 'English',           label: 'English' },
-  { key: 'History',           label: 'History' },
-  { key: 'Math',              label: 'Math' },
-  { key: 'Science',           label: 'Science' },
-  { key: 'CS',                label: 'CS' },
-  { key: 'World Languages',   label: 'Languages' },
-  { key: 'Arts',              label: 'Arts' },
-  { key: 'Religion & Philosophy', label: 'Religion' },
-  { key: 'Health',            label: 'Health / PE' },
-  { key: 'Interdisciplinary', label: 'Interdisciplinary' },
-  { key: 'Special',           label: 'Special' },
+  { key: 'English',               label: 'English',         req: 4,   unit: 'yr' },
+  { key: 'History',               label: 'History',         req: 2,   unit: 'cr' },
+  { key: 'Math',                  label: 'Math',            req: 3,   unit: 'yr' },
+  { key: 'Science',               label: 'Science',         req: 3,   unit: 'yr' },
+  { key: 'CS',                    label: 'CS'                                     },
+  { key: 'World Languages',       label: 'Languages',       req: 2,   unit: 'yr' },
+  { key: 'Arts',                  label: 'Arts',            req: 1.5, unit: 'cr' },
+  { key: 'Religion & Philosophy', label: 'Religion',        req: 2,   unit: 'cr' },
+  { key: 'Health',                label: 'Health / PE',     req: 1,   unit: 'cr' },
+  { key: 'Interdisciplinary',     label: 'Interdisciplinary'                      },
+  { key: 'Special',               label: 'Special'                                },
 ];
 
 // ── MATH LEVEL ORDERING ───────────────────────────────────────────────────
@@ -538,6 +538,18 @@ function capacityDots(slots, max = 6) {
 
 // ── PLAN RENDERING ────────────────────────────────────────────────────────
 
+// Returns credits earned per department key (past + planned, excluding in-progress/future locked).
+function computeCreditsPerDept() {
+  const credits = {};
+  for (const id of [...lockedCourses, ...plan.keys()]) {
+    const c = getCourseById(id);
+    if (!c) continue;
+    if (lockedCourses.has(id) && c.id !== 'health' && displayGrade(c) >= state.currentGrade) continue;
+    credits[c.department] = (credits[c.department] || 0) + (c.semester === 'yearlong' ? 1 : 0.5);
+  }
+  return credits;
+}
+
 function renderPlanGrid() {
   const header = document.getElementById('plan-grid-header');
   const body   = document.getElementById('plan-grid-body');
@@ -567,6 +579,8 @@ function renderPlanGrid() {
   // ── Plan body ──────────────────────────────────────────────────────────
   body.innerHTML = '';
 
+  const credits = computeCreditsPerDept();
+
   DEPT_ROWS.forEach(deptDef => {
     const deptCourses = COURSES.filter(c => c.department === deptDef.key);
     if (deptCourses.length === 0) return;
@@ -576,11 +590,21 @@ function renderPlanGrid() {
 
     const label = document.createElement('div');
     label.className = 'row-label';
-    label.textContent = deptDef.label;
+    if (deptDef.req) {
+      const have = credits[deptDef.key] || 0;
+      const met  = have >= deptDef.req;
+      label.innerHTML = `
+        <span class="row-label-name">${deptDef.label}</span>
+        <span class="row-label-req ${met ? 'row-req-met' : 'row-req-progress'}">
+          ${met ? '✓' : `${have}/${deptDef.req}${deptDef.unit}`}
+        </span>`;
+    } else {
+      label.textContent = deptDef.label;
+    }
     row.appendChild(label);
 
     grades.forEach(grade => {
-      row.appendChild(buildPlanCell(deptDef.key, grade, deptCourses));
+      row.appendChild(buildPlanCell(deptDef, grade, deptCourses, credits));
     });
 
     body.appendChild(row);
@@ -589,7 +613,8 @@ function renderPlanGrid() {
   renderWhatsLeft();
 }
 
-function buildPlanCell(dept, grade, deptCourses) {
+function buildPlanCell(deptDef, grade, deptCourses, credits) {
+  const dept = deptDef.key ?? deptDef; // accept string or deptDef object
   const cell = document.createElement('div');
   cell.className = 'cell plan-cell';
 
@@ -612,8 +637,10 @@ function buildPlanCell(dept, grade, deptCourses) {
   lockedHere.forEach(c  => cell.appendChild(buildPlanCard(c, 'locked-in')));
   plannedHere.forEach(c => cell.appendChild(buildPlanCard(c, 'planned')));
 
+  const reqMet = deptDef.req && (credits?.[dept] || 0) >= deptDef.req;
+
   // "+ add" slot — only show if there are unplanned options for this dept+grade
-  const addSlot = buildAddSlot(dept, grade, deptCourses);
+  const addSlot = buildAddSlot(dept, grade, deptCourses, reqMet);
   if (addSlot) cell.appendChild(addSlot);
 
   if (lockedHere.length === 0 && plannedHere.length === 0 && !addSlot) {
@@ -657,7 +684,7 @@ function buildPlanCard(course, status) {
   return card;
 }
 
-function buildAddSlot(dept, grade, deptCourses) {
+function buildAddSlot(dept, grade, deptCourses, reqMet = false) {
   const eligible = (deptCourses || COURSES.filter(c => c.department === dept)).filter(c => {
     if (plan.has(c.id) || lockedCourses.has(c.id)) return false;
     if (c.id === 'winterim') return false;
@@ -679,8 +706,8 @@ function buildAddSlot(dept, grade, deptCourses) {
   slot.className = 'add-slot';
 
   const btn = document.createElement('button');
-  btn.className = 'add-slot-btn';
-  btn.textContent = `+ add`;
+  btn.className = reqMet ? 'add-slot-btn req-met-btn' : 'add-slot-btn';
+  btn.textContent = reqMet ? 'already met · optionally add' : '+ add';
 
   const picker = document.createElement('div');
   picker.className = 'add-slot-picker hidden';
@@ -732,28 +759,11 @@ function renderWhatsLeft() {
 
   container.innerHTML = '';
 
-  // Credit totals by department (locked + planned).
-  // Exclude current-year locked courses — they're in-progress, not yet earned.
-  // Health is the exception: it's always locked and always counts (all students have it).
-  const credits = {};
-  for (const id of [...lockedCourses, ...plan.keys()]) {
-    const c = getCourseById(id);
-    if (!c) continue;
-    if (lockedCourses.has(id) && c.id !== 'health' && displayGrade(c) >= state.currentGrade) continue;
-    const dept = c.department;
-    credits[dept] = (credits[dept] || 0) + (c.semester === 'yearlong' ? 1 : 0.5);
-  }
+  const credits = computeCreditsPerDept();
 
-  const reqs = [
-    { dept: 'English',               label: 'English',   required: 4,   unit: 'yr'  },
-    { dept: 'History',               label: 'History',   required: 2,   unit: 'cr'  },
-    { dept: 'Math',                  label: 'Math',      required: 3,   unit: 'yr'  },
-    { dept: 'Science',               label: 'Science',   required: 3,   unit: 'yr'  },
-    { dept: 'World Languages',       label: 'Language',  required: 2,   unit: 'yr'  },
-    { dept: 'Arts',                  label: 'Arts',      required: 1.5, unit: 'cr'  },
-    { dept: 'Religion & Philosophy', label: 'Religion',  required: 2,   unit: 'cr'  },
-    { dept: 'Health',                label: 'Health',    required: 1,   unit: 'cr'  },
-  ];
+  const reqs = DEPT_ROWS
+    .filter(d => d.req)
+    .map(d => ({ dept: d.key, label: d.label, required: d.req, unit: d.unit }));
 
   reqs.forEach(req => {
     const have = credits[req.dept] || 0;

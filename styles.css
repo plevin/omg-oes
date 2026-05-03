@@ -423,10 +423,21 @@ html, body {
   text-transform: uppercase;
   color: var(--color-text-hint);
   padding: 8px 4px;
-  display: flex;
-  align-items: flex-start;
   padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
 }
+.row-label-name { display: block; }
+.row-label-req {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.row-req-progress { color: var(--color-text-hint); }
+.row-req-met      { color: #16a34a; }
 
 .cell {
   display: flex;
@@ -1174,6 +1185,11 @@ html, body {
   background: var(--color-surface-raised);
   color: var(--color-text-secondary);
   border-color: var(--color-text-hint);
+}
+.add-slot-btn.req-met-btn {
+  color: #16a34a;
+  border-color: #bbf7d0;
+  font-size: 10px;
 }
 
 /* Dropdown picker that opens from the add button */
