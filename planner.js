@@ -349,15 +349,13 @@ function seedLockedCourses() {
   const langId = LANG_CURRENT_COURSE_ID[state.language]?.[state.langLevel];
   if (langId) lockedCourses.add(langId);
 
-  // English: grades 9–11 are fixed; grade 12 is student-chosen electives
-  const engForGrade = { 9: 'eng9', 10: 'eng10', 11: 'eng11' };
-  const engId = engForGrade[state.currentGrade];
-  if (engId) lockedCourses.add(engId);
+  // English 9–11 are all required with no choice — pre-populate the full sequence.
+  // displayGrade() places each in the correct column; renderWhatsLeft() skips
+  // any that are current-year or future (>= currentGrade) when computing credits.
+  ['eng9', 'eng10', 'eng11'].forEach(id => lockedCourses.add(id));
 
-  // History: grades 9–10 are fixed; grades 11–12 are elective choices
-  const histForGrade = { 9: 'hist-global', 10: 'hist-us' };
-  const histId = histForGrade[state.currentGrade];
-  if (histId) lockedCourses.add(histId);
+  // History 9–10 are similarly non-optional; grade 11+ are elective choices.
+  ['hist-global', 'hist-us'].forEach(id => lockedCourses.add(id));
 
   // Health (required in grade 9 — all students have taken or are taking it)
   // Always lock it so it counts toward grad-requirement credits regardless of
@@ -741,7 +739,7 @@ function renderWhatsLeft() {
   for (const id of [...lockedCourses, ...plan.keys()]) {
     const c = getCourseById(id);
     if (!c) continue;
-    if (lockedCourses.has(id) && c.id !== 'health' && displayGrade(c) === state.currentGrade) continue;
+    if (lockedCourses.has(id) && c.id !== 'health' && displayGrade(c) >= state.currentGrade) continue;
     const dept = c.department;
     credits[dept] = (credits[dept] || 0) + (c.semester === 'yearlong' ? 1 : 0.5);
   }
