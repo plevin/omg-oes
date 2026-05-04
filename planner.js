@@ -18,7 +18,13 @@ const state = {
     arts:       false,
   },
   selectedCourseId: null,
+  pickerSort: localStorage.getItem('oes-picker-sort') || 'alpha', // 'alpha' | 'chrono'
 };
+
+// Departments collapsed by the user; persisted across sessions
+const collapsedDepts = new Set(
+  JSON.parse(localStorage.getItem('oes-collapsed-depts') || '[]')
+);
 
 // School year for the student's 9th-grade year (used to label columns)
 const BASE_SCHOOL_YEAR = 2026; // i.e. 2026–27
@@ -536,6 +542,29 @@ function capacityDots(slots, max = 6) {
   return '●'.repeat(full) + (half ? '◐' : '') + '○'.repeat(empty);
 }
 
+// ── ROW COLLAPSE HELPER ───────────────────────────────────────────────────
+// Attaches a collapse/expand toggle to a grid row's label.
+// The label element must already be in the DOM (appended to row).
+
+function attachRowCollapse(row, label, deptKey) {
+  const chevron = document.createElement('span');
+  chevron.className = 'row-label-chevron';
+  const isCollapsed = collapsedDepts.has(deptKey);
+  chevron.textContent = isCollapsed ? '▶' : '▼';
+  row.dataset.collapsed = isCollapsed ? 'true' : 'false';
+  label.insertBefore(chevron, label.firstChild);
+
+  label.style.cursor = 'pointer';
+  label.title = 'Click to collapse or expand';
+  label.addEventListener('click', () => {
+    const nowCollapsed = !collapsedDepts.has(deptKey);
+    nowCollapsed ? collapsedDepts.add(deptKey) : collapsedDepts.delete(deptKey);
+    localStorage.setItem('oes-collapsed-depts', JSON.stringify([...collapsedDepts]));
+    row.dataset.collapsed = nowCollapsed ? 'true' : 'false';
+    chevron.textContent = nowCollapsed ? '▶' : '▼';
+  });
+}
+
 // ── PLAN RENDERING ────────────────────────────────────────────────────────
 
 // Returns credits earned per department key (past + planned, excluding in-progress/future locked).
@@ -599,9 +628,10 @@ function renderPlanGrid() {
           ${met ? '✓' : `${have}/${deptDef.req}${deptDef.unit}`}
         </span>`;
     } else {
-      label.textContent = deptDef.label;
+      label.innerHTML = `<span class="row-label-name">${deptDef.label}</span>`;
     }
     row.appendChild(label);
+    attachRowCollapse(row, label, deptDef.key);
 
     grades.forEach(grade => {
       row.appendChild(buildPlanCell(deptDef, grade, deptCourses, credits));
@@ -712,8 +742,19 @@ function buildAddSlot(dept, grade, deptCourses, reqMet = false) {
   const picker = document.createElement('div');
   picker.className = 'add-slot-picker hidden';
 
-  // Populate picker items
-  eligible.sort((a, b) => a.name.localeCompare(b.name)).forEach(c => {
+  // Populate picker items — sorted by user preference
+  const semOrd = { fall: 0, 'fall-spring': 1, yearlong: 2, spring: 3 };
+  const sortFn = state.pickerSort === 'chrono'
+    ? (a, b) => {
+        const ga = displayGrade(a), gb = displayGrade(b);
+        if (ga !== gb) return ga - gb;
+        const sa = semOrd[a.semester] ?? 2, sb = semOrd[b.semester] ?? 2;
+        if (sa !== sb) return sa - sb;
+        return a.name.localeCompare(b.name);
+      }
+    : (a, b) => a.name.localeCompare(b.name);
+
+  eligible.sort(sortFn).forEach(c => {
     const item = document.createElement('div');
     const warn = !canPlan(c.id, grade);
     item.className = `add-slot-item${warn ? ' prereq-warn' : ''}`;
@@ -876,8 +917,9 @@ function renderGrid() {
     // Row label
     const label = document.createElement('div');
     label.className = 'row-label';
-    label.textContent = deptDef.label;
+    label.innerHTML = `<span class="row-label-name">${deptDef.label}</span>`;
     row.appendChild(label);
+    attachRowCollapse(row, label, deptDef.key);
 
     // One cell per remaining grade
     grades.forEach(grade => {
@@ -1044,6 +1086,8 @@ function buildCourseCard(course) {
   if (status === 'completed') badges.appendChild(makeBadge('✓', 'completed'));
   if (status === 'deadline') badges.appendChild(makeBadge('!', 'deadline'));
   if (status === 'locked')   badges.appendChild(makeBadge('–', 'locked'));
+  if (status === 'decision') badges.appendChild(makeBadge('decide', 'decision'));
+  if (status === 'unique')   badges.appendChild(makeBadge('★ OES', 'unique'));
   if (course.honors) badges.appendChild(makeBadge('H', 'honors'));
   if (course.ap) badges.appendChild(makeBadge('AP', 'ap'));
   if (course.socialImpact) badges.appendChild(makeBadge('SI', 'si'));
@@ -1132,11 +1176,15 @@ function renderPaths() {
       stepEl.className = 'path-step';
 
       const circleStatus = getStepStatus(step, path);
+      const stepCourse = step.courseId ? getCourseById(step.courseId) : null;
+      const semMap = { fall: 'fall', spring: 'spring', 'fall-spring': 'fall or spring' };
+      const semLabel = stepCourse ? (semMap[stepCourse.semester] || '') : '';
       stepEl.innerHTML = `
         <div class="step-content">
           <div class="step-grade">Gr ${step.grade}</div>
           <div class="step-circle ${circleStatus}">${step.grade}</div>
-          <div class="step-name">${step.courseId ? getCourseById(step.courseId)?.name || step.note : '—'}</div>
+          <div class="step-name">${stepCourse?.name || '—'}</div>
+          ${semLabel ? `<div class="step-sem">${semLabel}</div>` : ''}
           <div class="step-note">${step.note}</div>
         </div>
       `;
@@ -1428,6 +1476,17 @@ function bindProfileControls() {
   document.getElementById('toggle-arts')?.addEventListener('change', e => {
     state.interests.arts = e.target.checked;
     renderGrid();
+  });
+
+  // Picker sort toggle
+  const sortBtns = document.querySelectorAll('.sort-btn[data-sort]');
+  sortBtns.forEach(btn => {
+    btn.classList.toggle('sort-btn-active', btn.dataset.sort === state.pickerSort);
+    btn.addEventListener('click', () => {
+      state.pickerSort = btn.dataset.sort;
+      localStorage.setItem('oes-picker-sort', state.pickerSort);
+      sortBtns.forEach(b => b.classList.toggle('sort-btn-active', b.dataset.sort === state.pickerSort));
+    });
   });
 }
 

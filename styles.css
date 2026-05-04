@@ -257,6 +257,29 @@ html, body {
   color: var(--color-text-secondary);
 }
 
+/* ── PICKER SORT TOGGLE ────────────────────────────────────────────────── */
+.sort-toggle-group {
+  display: flex;
+  gap: 4px;
+}
+.sort-btn {
+  flex: 1;
+  padding: 4px 6px;
+  font-size: 11px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.sort-btn:hover { background: var(--color-surface-raised); }
+.sort-btn.sort-btn-active {
+  background: var(--color-text-hint);
+  color: var(--color-bg);
+  border-color: var(--color-text-hint);
+}
+
 /* ── TOP BAR ───────────────────────────────────────────────────────────── */
 .top-bar {
   height: var(--header-height);
@@ -430,6 +453,17 @@ html, body {
   gap: 3px;
 }
 .row-label-name { display: block; }
+.row-label-chevron {
+  font-size: 8px;
+  opacity: 0.5;
+  margin-bottom: 1px;
+  transition: opacity 0.15s;
+}
+.row-label:hover .row-label-chevron { opacity: 1; }
+
+/* Collapsed row: hide all cells, show only the label strip */
+.grid-row[data-collapsed="true"] > :not(.row-label) { display: none; }
+.grid-row[data-collapsed="true"] { min-height: unset; }
 .row-label-req {
   font-size: 10px;
   font-weight: 500;
@@ -747,6 +781,13 @@ html, body {
   font-size: 11px;
   font-weight: 500;
   color: var(--color-text);
+  max-width: 120px;
+}
+
+.step-sem {
+  font-size: 10px;
+  color: var(--color-text-hint);
+  font-style: italic;
   max-width: 120px;
 }
 
