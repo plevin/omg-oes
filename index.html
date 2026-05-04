@@ -22,7 +22,6 @@
       </div>
 
       <section class="profile-section">
-        <h3 class="section-heading">Student profile</h3>
 
         <div class="field-group">
           <label class="field-label" for="current-grade">Current grade</label>
@@ -84,7 +83,6 @@
       </section>
 
       <section class="profile-section">
-        <h3 class="section-heading">Interests</h3>
         <div class="toggle-list">
           <label class="toggle-item">
             <input type="checkbox" id="toggle-stem">
@@ -133,13 +131,18 @@
       <section class="profile-section">
         <h3 class="section-heading">Legend</h3>
         <div class="legend">
-          <div class="legend-item"><span class="badge badge-required">req</span> Required</div>
-          <div class="legend-item"><span class="badge badge-recommended">rec</span> Recommended</div>
+          <div class="legend-item"><span class="badge badge-required">req</span> Required course</div>
+          <div class="legend-item"><span class="badge badge-recommended">rec</span> Matches your interests</div>
           <div class="legend-item"><span class="badge badge-decision">decide</span> Key decision point</div>
-          <div class="legend-item"><span class="badge badge-unique">★ OES</span> Unique opportunity</div>
-          <div class="legend-item"><span class="badge badge-deadline">!</span> Act now</div>
-          <div class="legend-item"><span class="badge badge-completed">✓</span> Completed</div>
-          <div class="legend-item"><span class="badge badge-locked">–</span> Locked out</div>
+          <div class="legend-item"><span class="badge badge-unique">★ OES</span> Unique to OES</div>
+          <div class="legend-item"><span class="badge badge-deadline">!</span> Act now — deadline</div>
+          <div class="legend-item"><span class="badge badge-completed">✓</span> Already completed</div>
+          <div class="legend-item"><span class="badge badge-locked">–</span> Not reachable from your placement</div>
+          <div class="legend-item"><span class="badge badge-honors">H</span> Honors section</div>
+          <div class="legend-item"><span class="badge badge-si">SI</span> Social Impact course</div>
+          <div class="legend-item legend-item-text">▶ NOW — your current placement course</div>
+          <div class="legend-item legend-item-text">● slots — each year holds up to 6 courses</div>
+          <div class="legend-item legend-item-text">upcoming — deadline in a future grade</div>
         </div>
       </section>
 
@@ -161,10 +164,10 @@
         <div class="view-tabs">
           <button class="tab-btn active" onclick="switchView('grid')" id="tab-grid">Course Catalog</button>
           <button class="tab-btn" onclick="switchView('plan')" id="tab-plan">My Plan</button>
-          <button class="tab-btn" onclick="switchView('paths')" id="tab-paths">Critical paths</button>
+          <button class="tab-btn" onclick="switchView('paths')" id="tab-paths">Key sequences</button>
           <button class="tab-btn" onclick="switchView('deadlines')" id="tab-deadlines">
             Deadlines
-            <span class="deadline-badge" id="deadline-count">3</span>
+            <span class="deadline-badge" id="deadline-count" title="urgent actions">3</span>
           </button>
         </div>
         <button class="print-btn" onclick="window.print()" title="Print plan">Print</button>
@@ -200,6 +203,7 @@
 
       <!-- VIEW: CRITICAL PATHS -->
       <div class="view hidden" id="view-paths">
+        <p class="view-intro">Courses where the order and timing matter most — missing an early step can close off later options. Each sequence updates based on your current grade and placement.</p>
         <div class="paths-container" id="paths-container">
           <!-- Injected by planner.js -->
         </div>
@@ -207,6 +211,7 @@
 
       <!-- VIEW: DEADLINES -->
       <div class="view hidden" id="view-deadlines">
+        <p class="view-intro">Actions that have real deadlines or decision windows. <strong>Critical</strong> and <strong>high</strong> items (counted in the tab badge) need attention now. <strong>Medium</strong> items are worth planning ahead. <strong>Upcoming</strong> items are on the horizon for a future grade.</p>
         <div class="deadlines-container" id="deadlines-container">
           <!-- Injected by planner.js -->
         </div>

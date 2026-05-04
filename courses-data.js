@@ -118,7 +118,7 @@ const COURSES = [
     semester: 'fall', honors: false, ap: false, socialImpact: true,
     prereqs: [], unlocks: [],
     tags: ['unique'],
-    notes: 'Human rights, political strife, environmental sustainability. Social Impact class — counts as CE project.', deadlineNote: null },
+    notes: 'Human rights, political strife, environmental sustainability. Social Impact class — counts as a Community Engagement (CE) project.', deadlineNote: null },
 
   { id: 'hist-psych', name: 'Introduction to Psychology', department: 'History', grades: [11, 12],
     semester: 'fall-spring', honors: false, ap: false, socialImpact: false,
@@ -287,7 +287,7 @@ const COURSES = [
     prereqs: [], unlocks: ['sci-chemistry', 'sci-chem-h'],
     tags: ['required'],
     prereqNotes: 'Placement by department based on transcript, teacher rec, and STEM diagnostic.',
-    notes: 'One-dimensional track: algebraic tools only. Covers kinematics, dynamics, energy, and waves. Requires Science Inquiry Project (SIP). Most students are placed here.',
+    notes: 'One-dimensional track: algebraic tools only. Covers kinematics, dynamics, energy, and waves. Requires a Science Inquiry Project (SIP — a self-directed research project). Most students are placed here.',
     deadlineNote: null },
 
   { id: 'sci-physics-2d', name: 'Physics Foundation (2D)', department: 'Science', grades: [9],
@@ -295,14 +295,14 @@ const COURSES = [
     prereqs: [], unlocks: ['sci-chemistry', 'sci-chem-h'],
     tags: ['required', 'decision', 'stem'],
     prereqNotes: 'Placement by department. Requires strong math background — trigonometry and systems of equations.',
-    notes: 'Two-dimensional track: adds trigonometry and 2D vector analysis to the 1D content. Stronger preparation for Accelerated Chemistry and Advanced Physics. Requires Science Inquiry Project (SIP).',
+    notes: 'Two-dimensional track: adds trigonometry and 2D vector analysis to the 1D content. Stronger preparation for Accelerated Chemistry and Advanced Physics. Requires a Science Inquiry Project (SIP — a self-directed research project).',
     deadlineNote: null },
 
   { id: 'sci-chemistry', name: 'Chemistry', department: 'Science', grades: [10],
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: ['sci-physics'], unlocks: ['sci-biology', 'sci-bio-h', 'sci-advchem', 'sci-ecology', 'sci-blc-pnw', 'sci-blc-arts'],
     tags: ['required'],
-    notes: 'SIP required. Foundational for all advanced science.', deadlineNote: null },
+    notes: 'Science Inquiry Project (SIP) required. Foundational for all advanced science.', deadlineNote: null },
 
   { id: 'sci-chem-h', name: 'Accelerated Chemistry (H)', department: 'Science', grades: [10],
     semester: 'yearlong', honors: true, ap: false, socialImpact: false,
@@ -325,7 +325,7 @@ const COURSES = [
     prereqNotes: 'Placement by department',
     unlocks: ['sci-advbio-mol', 'sci-marine', 'sci-ecology'],
     tags: ['decision', 'stem'],
-    notes: 'Strong research focus; SIP required + submitted to Aardvark Expo.',
+    notes: 'Strong research focus; Science Inquiry Project (SIP) required and submitted to Aardvark Expo.',
     deadlineNote: null },
 
   { id: 'sci-advbio-mol', name: 'Advanced Biology: Molecular Research (H)', department: 'Science', grades: [12],
@@ -491,7 +491,7 @@ const COURSES = [
     semester: 'yearlong', honors: false, ap: false, socialImpact: false,
     prereqs: ['lang-spanish3'], unlocks: ['lang-ap-spanish', 'lang-hlc'],
     tags: ['language', 'decision'],
-    notes: 'Pre-AP. Opens AP Spanish and HLC/HCC.',
+    notes: 'Pre-AP. Opens AP Spanish and HLC/HCC (Heritage Language Certification).',
     deadlineNote: 'Must reach Level 4 by 11th grade to access AP or HLC in 12th.' },
 
   { id: 'lang-ap-spanish', name: 'AP Spanish Language', department: 'World Languages', grades: [12],
@@ -504,7 +504,7 @@ const COURSES = [
     semester: 'fall', honors: true, ap: false, socialImpact: true,
     prereqs: ['lang-spanish4'], unlocks: [],
     tags: ['language', 'unique'],
-    notes: 'Weekly 1-on-1 tutoring at Vose Elementary. Counts as Honors + Social Impact + CE project simultaneously. Alternates content yearly — can repeat.',
+    notes: 'Weekly 1-on-1 tutoring at Vose Elementary. Counts as Honors + Social Impact + Community Engagement (CE) project simultaneously. Alternates content yearly — can repeat.',
     deadlineNote: null },
 
   { id: 'lang-french2', name: 'French II', department: 'World Languages', grades: [9, 10],
@@ -846,7 +846,7 @@ const DEADLINES = [
     urgency: 'medium',
     gradeRelevant: 9,
     action: 'Decide on language continuation depth',
-    detail: 'Two years fulfills the requirement. But 3–4 years is strongly recommended for selective colleges. AP or HLC/HCC requires Level 4, which means committing to the language through 11th grade.',
+    detail: 'Two years fulfills the requirement. But 3–4 years is strongly recommended for selective colleges. AP or HLC/HCC (Heritage Language Certification) requires Level 4, which means committing to the language through 11th grade.',
     affects: ['lang-spanish4', 'lang-ap-spanish', 'lang-hlc', 'lang-french4', 'lang-ap-french']
   },
   {

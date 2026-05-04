@@ -1084,10 +1084,11 @@ function buildCourseCard(course) {
   badges.className = 'card-badges';
 
   if (status === 'completed') badges.appendChild(makeBadge('✓', 'completed'));
-  if (status === 'deadline') badges.appendChild(makeBadge('!', 'deadline'));
-  if (status === 'locked')   badges.appendChild(makeBadge('–', 'locked'));
-  if (status === 'decision') badges.appendChild(makeBadge('decide', 'decision'));
-  if (status === 'unique')   badges.appendChild(makeBadge('★ OES', 'unique'));
+  if (status === 'deadline')  badges.appendChild(makeBadge('!', 'deadline'));
+  if (status === 'locked')    badges.appendChild(makeBadge('–', 'locked'));
+  if (status === 'required')  badges.appendChild(makeBadge('req', 'required'));
+  if (status === 'decision')  badges.appendChild(makeBadge('decide', 'decision'));
+  if (status === 'unique')    badges.appendChild(makeBadge('★ OES', 'unique'));
   if (course.honors) badges.appendChild(makeBadge('H', 'honors'));
   if (course.ap) badges.appendChild(makeBadge('AP', 'ap'));
   if (course.socialImpact) badges.appendChild(makeBadge('SI', 'si'));
@@ -1181,7 +1182,7 @@ function renderPaths() {
       const semLabel = stepCourse ? (semMap[stepCourse.semester] || '') : '';
       stepEl.innerHTML = `
         <div class="step-content">
-          <div class="step-grade">Gr ${step.grade}</div>
+          <div class="step-grade">Grade ${step.grade}</div>
           <div class="step-circle ${circleStatus}">${step.grade}</div>
           <div class="step-name">${stepCourse?.name || '—'}</div>
           ${semLabel ? `<div class="step-sem">${semLabel}</div>` : ''}
