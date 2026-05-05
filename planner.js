@@ -57,6 +57,32 @@ function showToast(message, type = 'error') {
   }, 4500);
 }
 
+// Shows an info toast with a clickable Undo button.
+// undoFn is called if the user clicks Undo before the toast times out.
+function showToastWithUndo(message, undoFn) {
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-info';
+  toast.style.pointerEvents = 'auto'; // enable click on Undo button
+  toast.innerHTML = `${message} <button class="toast-undo-btn">Undo</button>`;
+  document.body.appendChild(toast);
+
+  let undone = false;
+  toast.querySelector('.toast-undo-btn').addEventListener('click', () => {
+    undone = true;
+    undoFn();
+    toast.classList.remove('toast-visible');
+    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+  });
+
+  requestAnimationFrame(() => toast.classList.add('toast-visible'));
+  setTimeout(() => {
+    if (!undone) {
+      toast.classList.remove('toast-visible');
+      toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+    }
+  }, 5000);
+}
+
 // ── DEPARTMENT ROW DEFINITIONS ────────────────────────────────────────────
 
 const DEPT_ROWS = [
@@ -505,7 +531,7 @@ function refreshPlanForProfileChange() {
     const names = newlyBroken.length <= 2
       ? newlyBroken.join(' and ')
       : newlyBroken.slice(0, 2).join(', ') + ` and ${newlyBroken.length - 2} more`;
-    showToast(`Profile change broke prereqs for: ${names}. Review your plan.`, 'warning');
+    showToast(`Placement change: ${names} may be missing prerequisites now. Check My Plan.`, 'warning');
   }
 
   savePlan();
@@ -594,7 +620,8 @@ function renderPlanGrid() {
   header.innerHTML = '<div class="grid-corner"></div>';
   grades.forEach(grade => {
     const slots = computeCapacity(grade);
-    const colorClass = slots >= 6 ? 'capacity-red' : slots >= 5.5 ? 'capacity-amber' : '';
+    // Full (6/6) is on-track, not an error — use green; approaching full (5.5+) → amber
+    const colorClass = slots >= 6 ? 'capacity-full' : slots >= 5.5 ? 'capacity-amber' : '';
     const col = document.createElement('div');
     col.className = 'grade-label';
     col.innerHTML = `
@@ -708,7 +735,27 @@ function buildPlanCard(course, status) {
     card.appendChild(icon);
     card.addEventListener('click', () => showDetail(course.id));
   } else {
-    card.addEventListener('click', () => togglePlan(course.id));
+    // Click card body → open detail (same as catalog, consistent behavior)
+    card.addEventListener('click', e => {
+      if (!e.target.closest('.plan-remove-btn')) showDetail(course.id);
+    });
+    // Separate explicit remove button with undo support
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'plan-remove-btn';
+    removeBtn.textContent = '✕ remove';
+    removeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const grade = plan.get(course.id);
+      plan.delete(course.id);
+      savePlan();
+      renderPlanGrid();
+      showToastWithUndo(`Removed "${course.name}".`, () => {
+        plan.set(course.id, grade);
+        savePlan();
+        renderPlanGrid();
+      });
+    });
+    card.appendChild(removeBtn);
   }
 
   return card;
@@ -759,20 +806,23 @@ function buildAddSlot(dept, grade, deptCourses, reqMet = false) {
     const warn = !canPlan(c.id, grade);
     item.className = `add-slot-item${warn ? ' prereq-warn' : ''}`;
     const semLabel = { fall: '· fall', spring: '· spring', 'fall-spring': '· fall or spring', yearlong: '' }[c.semester] ?? '';
-    item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel}${warn ? ' ⚠ prereq' : ''}</span>`;
-    item.addEventListener('click', e => {
-      e.stopPropagation();
-      if (!canPlan(c.id, grade)) {
-        const missing = missingPrereqs(c.id, grade).join(', ');
-        showToast(`Add prerequisite first: ${missing || 'a required prior course'}.`, 'warning');
+
+    if (warn) {
+      // Show the blocking prereq inline so the user knows why before clicking
+      const missing = missingPrereqs(c.id, grade).join(', ') || 'a required prior course';
+      item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel} · needs: ${missing}</span>`;
+      item.title = `Requires: ${missing}`;
+      item.addEventListener('click', e => e.stopPropagation()); // swallow — not selectable
+    } else {
+      item.innerHTML = `<span class="add-item-name">${c.name}</span><span class="add-item-meta">${semLabel}</span>`;
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        plan.set(c.id, grade); // record which year the student is planning this course
+        savePlan();
         picker.classList.add('hidden');
-        return;
-      }
-      plan.set(c.id, grade); // record which year the student is planning this course
-      savePlan();
-      picker.classList.add('hidden');
-      renderPlanGrid();
-    });
+        renderPlanGrid();
+      });
+    }
     picker.appendChild(item);
   });
 
@@ -811,13 +861,24 @@ function renderWhatsLeft() {
     const met  = have >= req.required;
     const partial = have > 0 && !met;
 
+    const unitTitle = req.unit === 'yr'
+      ? 'yr = full-year course (1 credit each)'
+      : 'cr = semester credit (0.5 per semester course, 1 per yearlong)';
+
     const pill = document.createElement('div');
     pill.className = `req-pill ${met ? 'req-met' : partial ? 'req-partial' : 'req-missing'}`;
+    pill.title = unitTitle;
     pill.innerHTML = met
       ? `<span class="pill-label">${req.label}</span><span class="pill-check">✓ ${have}${req.unit}</span>`
       : `<span class="pill-label">${req.label}</span><span class="pill-count">${have}/${req.required}${req.unit}</span>`;
     container.appendChild(pill);
   });
+
+  // Small unit legend so cr/yr aren't mysterious abbreviations
+  const legend = document.createElement('div');
+  legend.className = 'whats-left-legend';
+  legend.textContent = 'yr = full-year · cr = semester credit';
+  container.appendChild(legend);
 }
 
 // ── DISPLAY GRADE COMPUTATION ─────────────────────────────────────────────
@@ -1197,8 +1258,25 @@ function renderPaths() {
       stepsEl.appendChild(stepEl);
     });
 
+    if (isAtRisk) {
+      const note = document.createElement('div');
+      note.className = 'path-at-risk-note';
+      note.textContent = '⚠ ' + getAtRiskReason(path);
+      card.appendChild(note);
+    }
+
     container.appendChild(card);
   });
+}
+
+function getAtRiskReason(path) {
+  if (path.id === 'path-calc-bc') {
+    return 'Not reachable from your current math placement. A Geometry placement in 9th grade is required to reach Calc BC by senior year. Update your math placement in the sidebar if it changed.';
+  }
+  if (path.id === 'path-ml') {
+    return 'CS track is off. Turn on the CS track toggle in the sidebar to highlight recommended courses toward this path.';
+  }
+  return 'This path may be out of reach from your current placement.';
 }
 
 function computePathRisk(path) {
